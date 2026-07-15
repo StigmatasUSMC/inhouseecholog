@@ -764,5 +764,655 @@
       "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
       "link": "https://wvw.report/eH04-20260714-205309_wvw"
     }
+  ],
+  "highScores": [
+    {
+      "category": "fight_dps",
+      "label": "Best Fight DPS",
+      "entries": [
+        {
+          "name": "Taegarro",
+          "prof": "Amalgam",
+          "account": "Eggo.5493",
+          "value": 6581.23
+        },
+        {
+          "name": "Cursed Crystal",
+          "prof": "Evoker",
+          "account": "Kyzulo.1709",
+          "value": 5839.0
+        },
+        {
+          "name": "Gwaizin",
+          "prof": "Amalgam",
+          "account": "Gwai.1892",
+          "value": 5652.7
+        },
+        {
+          "name": "Taegarro",
+          "prof": "Amalgam",
+          "account": "Eggo.5493",
+          "value": 5608.06
+        },
+        {
+          "name": "Yturo",
+          "prof": "Tempest",
+          "account": "Natekipz.4395",
+          "value": 5500.43
+        }
+      ]
+    },
+    {
+      "category": "statTarget_killed",
+      "label": "Highest Kill Rate (Single Fight)",
+      "entries": [
+        {
+          "name": "Yturo",
+          "prof": "Tempest",
+          "account": "Natekipz.4395",
+          "value": 0.081
+        },
+        {
+          "name": "Taegarro",
+          "prof": "Amalgam",
+          "account": "Eggo.5493",
+          "value": 0.064
+        },
+        {
+          "name": "Gwaizin",
+          "prof": "Amalgam",
+          "account": "Gwai.1892",
+          "value": 0.061
+        },
+        {
+          "name": "Taegarro",
+          "prof": "Amalgam",
+          "account": "Eggo.5493",
+          "value": 0.05
+        },
+        {
+          "name": "Gwaizin",
+          "prof": "Amalgam",
+          "account": "Gwai.1892",
+          "value": 0.05
+        }
+      ]
+    },
+    {
+      "category": "statTarget_downed",
+      "label": "Highest Down Rate (Single Fight)",
+      "entries": [
+        {
+          "name": "Gwaizin",
+          "prof": "Amalgam",
+          "account": "Gwai.1892",
+          "value": 0.182
+        },
+        {
+          "name": "Taegarro",
+          "prof": "Amalgam",
+          "account": "Eggo.5493",
+          "value": 0.095
+        },
+        {
+          "name": "Taegarro",
+          "prof": "Amalgam",
+          "account": "Eggo.5493",
+          "value": 0.081
+        },
+        {
+          "name": "Loo Sii",
+          "prof": "Reaper",
+          "account": "cutebinature.5807",
+          "value": 0.081
+        },
+        {
+          "name": "Gwaizin",
+          "prof": "Amalgam",
+          "account": "Gwai.1892",
+          "value": 0.067
+        }
+      ]
+    },
+    {
+      "category": "statTarget_downContribution",
+      "label": "Best Down Contribution (Single Fight)",
+      "entries": [
+        {
+          "name": "Taegarro",
+          "prof": "Amalgam",
+          "account": "Eggo.5493",
+          "value": 1704.8
+        },
+        {
+          "name": "Taegarro",
+          "prof": "Amalgam",
+          "account": "Eggo.5493",
+          "value": 1628.856
+        },
+        {
+          "name": "Yturo",
+          "prof": "Tempest",
+          "account": "Natekipz.4395",
+          "value": 1334.923
+        },
+        {
+          "name": "Gwaizin",
+          "prof": "Amalgam",
+          "account": "Gwai.1892",
+          "value": 1328.987
+        },
+        {
+          "name": "Gwaizin",
+          "prof": "Amalgam",
+          "account": "Gwai.1892",
+          "value": 1192.675
+        }
+      ]
+    },
+    {
+      "category": "statTarget_appliedCrowdControl",
+      "label": "Highest CC Rate Applied (Single Fight)",
+      "entries": [
+        {
+          "name": "Mr Globby Gloop",
+          "prof": "Guardian",
+          "account": "MrFishz.1527",
+          "value": 0.151
+        },
+        {
+          "name": "Gongju Winter",
+          "prof": "Luminary",
+          "account": "Kitachi.5079",
+          "value": 0.143
+        },
+        {
+          "name": "Mr Globby Gloop",
+          "prof": "Guardian",
+          "account": "MrFishz.1527",
+          "value": 0.12
+        },
+        {
+          "name": "Cursed Crystal",
+          "prof": "Evoker",
+          "account": "Kyzulo.1709",
+          "value": 0.11
+        },
+        {
+          "name": "Gongju Winter",
+          "prof": "Luminary",
+          "account": "Kitachi.5079",
+          "value": 0.11
+        }
+      ]
+    },
+    {
+      "category": "defenses_blockedCount",
+      "label": "Most Blocks (Single Fight)",
+      "entries": [
+        {
+          "name": "Grandfortress",
+          "prof": "Firebrand",
+          "account": "Progression.6308",
+          "value": 0.664
+        },
+        {
+          "name": "Pintsize Vanguard",
+          "prof": "Firebrand",
+          "account": "WarHawk.1892",
+          "value": 0.529
+        },
+        {
+          "name": "Kintsvgi",
+          "prof": "Luminary",
+          "account": "Lvnatik.8326",
+          "value": 0.367
+        },
+        {
+          "name": "Pintsize Vanguard",
+          "prof": "Firebrand",
+          "account": "WarHawk.1892",
+          "value": 0.337
+        },
+        {
+          "name": "Chicabamba",
+          "prof": "Reaper",
+          "account": "Loliver.1693",
+          "value": 0.311
+        }
+      ]
+    },
+    {
+      "category": "defenses_evadedCount",
+      "label": "Most Evades (Single Fight)",
+      "entries": [
+        {
+          "name": "Cursed Crystal",
+          "prof": "Evoker",
+          "account": "Kyzulo.1709",
+          "value": 0.964
+        },
+        {
+          "name": "Strong Man Stroody",
+          "prof": "Paragon",
+          "account": "Tink.2673",
+          "value": 0.956
+        },
+        {
+          "name": "Cursed Crystal",
+          "prof": "Evoker",
+          "account": "Kyzulo.1709",
+          "value": 0.747
+        },
+        {
+          "name": "Gongju Winter",
+          "prof": "Luminary",
+          "account": "Kitachi.5079",
+          "value": 0.668
+        },
+        {
+          "name": "Cheeeky Besitos",
+          "prof": "Evoker",
+          "account": "besitos.1936",
+          "value": 0.629
+        }
+      ]
+    },
+    {
+      "category": "defenses_dodgeCount",
+      "label": "Most Dodges (Single Fight)",
+      "entries": [
+        {
+          "name": "Gwaizin",
+          "prof": "Amalgam",
+          "account": "Gwai.1892",
+          "value": 0.193
+        },
+        {
+          "name": "Mr Globby Gloop",
+          "prof": "Guardian",
+          "account": "MrFishz.1527",
+          "value": 0.189
+        },
+        {
+          "name": "Cheeeky Besitos",
+          "prof": "Evoker",
+          "account": "besitos.1936",
+          "value": 0.142
+        },
+        {
+          "name": "Taegarro",
+          "prof": "Amalgam",
+          "account": "Eggo.5493",
+          "value": 0.138
+        },
+        {
+          "name": "Cheeeky Besitos",
+          "prof": "Evoker",
+          "account": "besitos.1936",
+          "value": 0.136
+        }
+      ]
+    },
+    {
+      "category": "defenses_invulnedCount",
+      "label": "Most Invulns (Single Fight)",
+      "entries": [
+        {
+          "name": "Grandfortress",
+          "prof": "Firebrand",
+          "account": "Progression.6308",
+          "value": 5.311
+        },
+        {
+          "name": "Zagirrii",
+          "prof": "Paragon",
+          "account": "Kirrii.1685",
+          "value": 2.832
+        },
+        {
+          "name": "Iabrat",
+          "prof": "Reaper",
+          "account": "Labrat.5278",
+          "value": 2.691
+        },
+        {
+          "name": "Fab Phen",
+          "prof": "Untamed",
+          "account": "NightKnight.6394",
+          "value": 2.351
+        },
+        {
+          "name": "Pintsize Vanguard",
+          "prof": "Firebrand",
+          "account": "WarHawk.1892",
+          "value": 2.296
+        }
+      ]
+    },
+    {
+      "category": "defenses_boonStrips",
+      "label": "Most Boons Stripped From (Single Fight)",
+      "entries": [
+        {
+          "name": "Grandfortress",
+          "prof": "Firebrand",
+          "account": "Progression.6308",
+          "value": 2.324
+        },
+        {
+          "name": "Iabrat",
+          "prof": "Reaper",
+          "account": "Labrat.5278",
+          "value": 1.763
+        },
+        {
+          "name": "Integra Nasuka",
+          "prof": "Mechanist",
+          "account": "StubbsDaZombie.7139",
+          "value": 1.242
+        },
+        {
+          "name": "Grandfortress",
+          "prof": "Firebrand",
+          "account": "Progression.6308",
+          "value": 0.624
+        },
+        {
+          "name": "Zagirrii",
+          "prof": "Paragon",
+          "account": "Kirrii.1685",
+          "value": 0.618
+        }
+      ]
+    },
+    {
+      "category": "defenses_receivedCrowdControl",
+      "label": "Most CC Received (Single Fight)",
+      "entries": [
+        {
+          "name": "Iabrat",
+          "prof": "Reaper",
+          "account": "Labrat.5278",
+          "value": 0.278
+        },
+        {
+          "name": "Integra Nasuka",
+          "prof": "Mechanist",
+          "account": "StubbsDaZombie.7139",
+          "value": 0.248
+        },
+        {
+          "name": "Tuuki Tokisaki",
+          "prof": "Untamed",
+          "account": "HeavenSwordz.8492",
+          "value": 0.211
+        },
+        {
+          "name": "Zagirrii",
+          "prof": "Paragon",
+          "account": "Kirrii.1685",
+          "value": 0.206
+        },
+        {
+          "name": "Pintsize Vanguard",
+          "prof": "Firebrand",
+          "account": "WarHawk.1892",
+          "value": 0.192
+        }
+      ]
+    },
+    {
+      "category": "support_condiCleanse",
+      "label": "Most Condition Cleanses (Single Fight)",
+      "entries": [
+        {
+          "name": "Cheeeky Besitos",
+          "prof": "Evoker",
+          "account": "besitos.1936",
+          "value": 1.848
+        },
+        {
+          "name": "Strong Man Stroody",
+          "prof": "Paragon",
+          "account": "Tink.2673",
+          "value": 1.672
+        },
+        {
+          "name": "Cheeeky Besitos",
+          "prof": "Evoker",
+          "account": "besitos.1936",
+          "value": 1.578
+        },
+        {
+          "name": "Cheeeky Besitos",
+          "prof": "Evoker",
+          "account": "besitos.1936",
+          "value": 1.544
+        },
+        {
+          "name": "Cheeeky Besitos",
+          "prof": "Evoker",
+          "account": "besitos.1936",
+          "value": 1.503
+        }
+      ]
+    },
+    {
+      "category": "support_boonStrips",
+      "label": "Most Boon Strips Applied (Single Fight)",
+      "entries": [
+        {
+          "name": "Iabrat",
+          "prof": "Reaper",
+          "account": "Labrat.5278",
+          "value": 3.991
+        },
+        {
+          "name": "Loo Sii",
+          "prof": "Reaper",
+          "account": "cutebinature.5807",
+          "value": 1.353
+        },
+        {
+          "name": "Chicabamba",
+          "prof": "Reaper",
+          "account": "Loliver.1693",
+          "value": 1.218
+        },
+        {
+          "name": "Loo Sii",
+          "prof": "Reaper",
+          "account": "cutebinature.5807",
+          "value": 1.158
+        },
+        {
+          "name": "Loo Sii",
+          "prof": "Reaper",
+          "account": "cutebinature.5807",
+          "value": 0.978
+        }
+      ]
+    },
+    {
+      "category": "totalDamageTaken_max",
+      "label": "Biggest Single Hit Taken",
+      "entries": [
+        {
+          "name": "Iabrat",
+          "prof": "Reaper",
+          "account": "Labrat.5278",
+          "value": 12588
+        },
+        {
+          "name": "Cursed Crystal",
+          "prof": "Evoker",
+          "account": "Kyzulo.1709",
+          "value": 12238
+        },
+        {
+          "name": "Gwaizin",
+          "prof": "Amalgam",
+          "account": "Gwai.1892",
+          "value": 11650
+        },
+        {
+          "name": "Cheeeky Besitos",
+          "prof": "Evoker",
+          "account": "besitos.1936",
+          "value": 11523
+        },
+        {
+          "name": "Chicabamba",
+          "prof": "Reaper",
+          "account": "Loliver.1693",
+          "value": 11287
+        }
+      ]
+    },
+    {
+      "category": "statTarget_max",
+      "label": "Biggest Single Hit Dealt",
+      "entries": [
+        {
+          "name": "Gwaizin",
+          "prof": "Amalgam",
+          "account": "Gwai.1892",
+          "value": 13299
+        },
+        {
+          "name": "Cursed Crystal",
+          "prof": "Evoker",
+          "account": "Kyzulo.1709",
+          "value": 11496
+        },
+        {
+          "name": "Taegarro",
+          "prof": "Amalgam",
+          "account": "Eggo.5493",
+          "value": 10835
+        },
+        {
+          "name": "Yturo",
+          "prof": "Tempest",
+          "account": "Natekipz.4395",
+          "value": 10641
+        },
+        {
+          "name": "Chicabamba",
+          "prof": "Reaper",
+          "account": "Loliver.1693",
+          "value": 10546
+        }
+      ]
+    },
+    {
+      "category": "burst_damage1S",
+      "label": "Best 1-Second Burst",
+      "entries": [
+        {
+          "name": "Yturo",
+          "prof": "Tempest",
+          "account": "Natekipz.4395",
+          "value": 50891
+        },
+        {
+          "name": "Taegarro",
+          "prof": "Amalgam",
+          "account": "Eggo.5493",
+          "value": 47655
+        },
+        {
+          "name": "Yturo",
+          "prof": "Tempest",
+          "account": "Natekipz.4395",
+          "value": 47592
+        },
+        {
+          "name": "Gwaizin",
+          "prof": "Amalgam",
+          "account": "Gwai.1892",
+          "value": 45077
+        },
+        {
+          "name": "Taegarro",
+          "prof": "Amalgam",
+          "account": "Eggo.5493",
+          "value": 42950
+        }
+      ]
+    },
+    {
+      "category": "extHealingStats_Healing",
+      "label": "Best Healing (Single Fight)",
+      "entries": [
+        {
+          "name": "Banner Interrupted",
+          "prof": "Paragon",
+          "account": "kurea.5421",
+          "value": 4101.95
+        },
+        {
+          "name": "Kintsvgi",
+          "prof": "Luminary",
+          "account": "Lvnatik.8326",
+          "value": 3141.22
+        },
+        {
+          "name": "Mr Globby Gloop",
+          "prof": "Guardian",
+          "account": "MrFishz.1527",
+          "value": 3137.46
+        },
+        {
+          "name": "Mr Globby Gloop",
+          "prof": "Guardian",
+          "account": "MrFishz.1527",
+          "value": 2977.61
+        },
+        {
+          "name": "Banner Interrupted",
+          "prof": "Paragon",
+          "account": "kurea.5421",
+          "value": 2925.57
+        }
+      ]
+    },
+    {
+      "category": "extBarrierStats_Barrier",
+      "label": "Best Barrier (Single Fight)",
+      "entries": [
+        {
+          "name": "Banner Interrupted",
+          "prof": "Paragon",
+          "account": "kurea.5421",
+          "value": 2175.5
+        },
+        {
+          "name": "Banner Interrupted",
+          "prof": "Paragon",
+          "account": "kurea.5421",
+          "value": 1817.08
+        },
+        {
+          "name": "Strong Man Stroody",
+          "prof": "Paragon",
+          "account": "Tink.2673",
+          "value": 1748.38
+        },
+        {
+          "name": "Banner Interrupted",
+          "prof": "Paragon",
+          "account": "kurea.5421",
+          "value": 1719.29
+        },
+        {
+          "name": "Banner Interrupted",
+          "prof": "Paragon",
+          "account": "kurea.5421",
+          "value": 1685.87
+        }
+      ]
+    }
   ]
 }
