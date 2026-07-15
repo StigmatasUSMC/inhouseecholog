@@ -1,7 +1,7 @@
 {
   "summary": {
     "guildName": "Echoes of the Vanguard (ECHO)",
-    "sessionLabel": "June 14, 2026",
+    "sessionLabel": "2026-07-15",
     "fightCount": 23,
     "fightCountExcluded": 17,
     "enemyKilled": 257,
@@ -520,7 +520,7 @@
       "enemyDowned": 29,
       "enemyKilled": 19,
       "commander": "",
-      "link": ""
+      "link": "https://wvw.report/ZQ0Q-20260714-190930_wvw"
     },
     {
       "id": 5,
@@ -531,7 +531,7 @@
       "enemyDowned": 35,
       "enemyKilled": 23,
       "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
-      "link": ""
+      "link": "https://wvw.report/J70F-20260714-191158_wvw"
     },
     {
       "id": 6,
@@ -542,7 +542,7 @@
       "enemyDowned": 24,
       "enemyKilled": 17,
       "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
-      "link": ""
+      "link": "https://wvw.report/y0NV-20260714-191658_wvw"
     },
     {
       "id": 9,
@@ -553,7 +553,7 @@
       "enemyDowned": 0,
       "enemyKilled": 0,
       "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
-      "link": ""
+      "link": "https://wvw.report/po3h-20260714-192943_wvw"
     },
     {
       "id": 13,
@@ -564,7 +564,7 @@
       "enemyDowned": 42,
       "enemyKilled": 35,
       "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
-      "link": ""
+      "link": "https://wvw.report/PZEX-20260714-193734_wvw"
     },
     {
       "id": 15,
@@ -575,7 +575,7 @@
       "enemyDowned": 27,
       "enemyKilled": 26,
       "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
-      "link": ""
+      "link": "https://wvw.report/ZCL2-20260714-194836_wvw"
     },
     {
       "id": 17,
@@ -586,7 +586,7 @@
       "enemyDowned": 0,
       "enemyKilled": 0,
       "commander": "",
-      "link": ""
+      "link": "https://wvw.report/dSPH-20260714-195148_wvw"
     },
     {
       "id": 18,
@@ -597,7 +597,7 @@
       "enemyDowned": 28,
       "enemyKilled": 9,
       "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
-      "link": ""
+      "link": "https://wvw.report/C7dF-20260714-195409_wvw"
     },
     {
       "id": 19,
@@ -608,7 +608,7 @@
       "enemyDowned": 50,
       "enemyKilled": 20,
       "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
-      "link": ""
+      "link": "https://wvw.report/bKxT-20260714-200002_wvw"
     },
     {
       "id": 20,
@@ -619,7 +619,7 @@
       "enemyDowned": 5,
       "enemyKilled": 2,
       "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
-      "link": ""
+      "link": "https://wvw.report/SMW8-20260714-200129_wvw"
     },
     {
       "id": 21,
@@ -630,7 +630,7 @@
       "enemyDowned": 31,
       "enemyKilled": 21,
       "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
-      "link": ""
+      "link": "https://wvw.report/3iSg-20260714-200551_wvw"
     },
     {
       "id": 25,
@@ -641,7 +641,7 @@
       "enemyDowned": 1,
       "enemyKilled": 1,
       "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
-      "link": ""
+      "link": "https://wvw.report/vKdw-20260714-201711_wvw"
     },
     {
       "id": 27,
@@ -652,7 +652,7 @@
       "enemyDowned": 7,
       "enemyKilled": 2,
       "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
-      "link": ""
+      "link": "https://wvw.report/CEyd-20260714-202622_wvw"
     },
     {
       "id": 28,
@@ -663,7 +663,7 @@
       "enemyDowned": 2,
       "enemyKilled": 1,
       "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
-      "link": ""
+      "link": "https://wvw.report/IOD4-20260714-203222_wvw"
     },
     {
       "id": 29,
@@ -674,7 +674,7 @@
       "enemyDowned": 25,
       "enemyKilled": 17,
       "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
-      "link": ""
+      "link": "https://wvw.report/EeXY-20260714-203559_wvw"
     },
     {
       "id": 30,
@@ -685,7 +685,7 @@
       "enemyDowned": 1,
       "enemyKilled": 1,
       "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
-      "link": ""
+      "link": "https://wvw.report/BnrG-20260714-203751_wvw"
     },
     {
       "id": 31,
@@ -696,7 +696,7 @@
       "enemyDowned": 25,
       "enemyKilled": 18,
       "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
-      "link": ""
+      "link": "https://wvw.report/IPhT-20260714-203846_wvw"
     },
     {
       "id": 33,
@@ -707,7 +707,7 @@
       "enemyDowned": 11,
       "enemyKilled": 5,
       "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
-      "link": ""
+      "link": "https://wvw.report/i4aS-20260714-204025_wvw"
     },
     {
       "id": 34,
@@ -718,7 +718,7 @@
       "enemyDowned": 1,
       "enemyKilled": 1,
       "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
-      "link": ""
+      "link": "https://wvw.report/09KR-20260714-204212_wvw"
     },
     {
       "id": 36,
@@ -729,7 +729,7 @@
       "enemyDowned": 20,
       "enemyKilled": 13,
       "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
-      "link": ""
+      "link": "https://wvw.report/8z97-20260714-204607_wvw"
     },
     {
       "id": 37,
@@ -740,7 +740,7 @@
       "enemyDowned": 2,
       "enemyKilled": 2,
       "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
-      "link": ""
+      "link": "https://wvw.report/mwom-20260714-204709_wvw"
     },
     {
       "id": 38,
@@ -751,7 +751,7 @@
       "enemyDowned": 2,
       "enemyKilled": 0,
       "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
-      "link": ""
+      "link": "https://wvw.report/zGoV-20260714-204900_wvw"
     },
     {
       "id": 40,
@@ -762,7 +762,7 @@
       "enemyDowned": 6,
       "enemyKilled": 5,
       "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
-      "link": ""
+      "link": "https://wvw.report/eH04-20260714-205309_wvw"
     }
   ]
 }

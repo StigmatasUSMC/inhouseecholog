@@ -17,11 +17,12 @@ param(
 )
 
 # ---------- ONE-TIME SETUP: EDIT THESE PATHS ----------
-$EIExe        = "C:\Users\newpc\Downloads\GW2EI\GuildWars2EliteInsights.exe"
-$TopStatsExe  = "C:\Users\newpc\Downloads\TopStats_v1.7.5\TopStats.exe"
-$TopStatsIni  = "C:\Users\newpc\Downloads\TopStats_v1.7.5\top_stats_config.ini"
-$PythonScript = "C:\Users\newpc\Downloads\build_report_data.py"
+$EIExe        = "C:\Users\newpc\Desktop\echologs\GW2-Elite-Insights-Parser-master\GW2EI.bin\Release\CLI\GuildWars2EliteInsights-CLI.exe"
+$TopStatsExe  = "C:\Users\newpc\Desktop\echologs\TopStats_v1.7.5\TopStats.exe"
+$TopStatsIni  = "C:\Users\newpc\Desktop\echologs\TopStats_v1.7.5\top_stats_config.ini"
+$PythonScript = "C:\Users\newpc\Desktop\echologs\build_report_data.py"
 $RepoFolder   = "C:\Users\newpc\Desktop\echologs\inhouseecholog"
+$ArchiveFolder = "C:\Users\newpc\Desktop\echologs\archived_fights_json"
 $TokenFile    = Join-Path $RepoFolder "dps-report-token.txt"
 # --------------------------------------------------------
 
@@ -43,6 +44,10 @@ if (-not (Test-Path $LogFolder)) {
 }
 
 $JsonOutput = Join-Path $LogFolder "json_output"
+if (Test-Path $JsonOutput) {
+    Write-Host "Clearing old json_output contents to avoid combining stale fights..." -ForegroundColor Yellow
+    Get-ChildItem -Path $JsonOutput -File | Remove-Item -Force
+}
 New-Item -ItemType Directory -Force -Path $JsonOutput | Out-Null
 
 # ---------- Step 1: Parse zevtc -> JSON with Elite Insights ----------
@@ -84,6 +89,10 @@ if (-not $logFiles) {
 }
 
 & $EIExe -c $TempConf $logFiles
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Elite Insights CLI exited with code $LASTEXITCODE."
+    exit 1
+}
 
 Write-Host "Parsing complete. JSON files written to $JsonOutput" -ForegroundColor Green
 
@@ -105,8 +114,9 @@ Push-Location $TopStatsDir
 & $TopStatsExe
 Pop-Location
 
-# Find the freshest combined stats file
-$combinedJson = Get-ChildItem -Path $TopStatsDir -Recurse -Filter "TW5_top_stats_*.json" |
+# Find the freshest combined stats file (TopStats.exe writes this into the
+# input JSON folder itself, not next to TopStats.exe)
+$combinedJson = Get-ChildItem -Path $JsonOutput -Recurse -Filter "TW5_top_stats_*.json" |
     Sort-Object LastWriteTime -Descending |
     Select-Object -First 1
 
@@ -116,6 +126,12 @@ if (-not $combinedJson) {
 }
 
 Write-Host "Combined session data: $($combinedJson.FullName)" -ForegroundColor Green
+
+# ---------- Archive the combined session file (small, kept forever, outside the repo) ----------
+New-Item -ItemType Directory -Force -Path $ArchiveFolder | Out-Null
+$archivePath = Join-Path $ArchiveFolder $combinedJson.Name
+Copy-Item -Path $combinedJson.FullName -Destination $archivePath -Force
+Write-Host "Archived combined session to: $archivePath" -ForegroundColor Green
 
 # ---------- Step 3: Generate data.json for the web dashboard ----------
 Write-Host "`n[3/3] Generating data.json..." -ForegroundColor Cyan
