@@ -88,11 +88,33 @@ if (-not $logFiles) {
     exit 1
 }
 
-& $EIExe -c $TempConf $logFiles
+$eiOutput = & $EIExe -c $TempConf $logFiles 2>&1 | Tee-Object -Variable eiOutputLines
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Elite Insights CLI exited with code $LASTEXITCODE."
     exit 1
 }
+
+# ---------- Capture dps.report links per fight from the console "Processed - {...}" lines ----------
+# TopStats.exe does not carry these links into its combined output, so we capture them
+# ourselves here and match them back to fights later using their timestamp.
+Write-Host "Extracting dps.report links from parser output..." -ForegroundColor Cyan
+$linksMap = @{}
+foreach ($line in $eiOutputLines) {
+    if ($line -match '^Processed - (\{.*\})$') {
+        try {
+            $obj = $Matches[1] | ConvertFrom-Json
+            $baseName = [System.IO.Path]::GetFileNameWithoutExtension($obj.fileName)
+            if ($obj.dpsReportLink) {
+                $linksMap[$baseName] = $obj.dpsReportLink
+            }
+        } catch {
+            # Ignore lines that don't parse cleanly as JSON
+        }
+    }
+}
+$linksMapPath = Join-Path $LogFolder "dps_links.json"
+$linksMap | ConvertTo-Json | Set-Content -Path $linksMapPath -Encoding UTF8
+Write-Host "Captured $($linksMap.Count) dps.report links -> $linksMapPath" -ForegroundColor Green
 
 Write-Host "Parsing complete. JSON files written to $JsonOutput" -ForegroundColor Green
 
@@ -139,7 +161,7 @@ Write-Host "`n[3/3] Generating data.json..." -ForegroundColor Cyan
 $dateStamp = Get-Date -Format "yyyy-MM-dd"
 $dataPath = Join-Path $RepoFolder "data.json"
 
-python $PythonScript $combinedJson.FullName $dataPath "$GuildName" "$dateStamp"
+python $PythonScript $combinedJson.FullName $dataPath "$GuildName" "$dateStamp" "$linksMapPath"
 
 if (Test-Path $dataPath) {
     Write-Host "`nDone! data.json written to:" -ForegroundColor Green
