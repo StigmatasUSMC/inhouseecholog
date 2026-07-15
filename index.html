@@ -158,6 +158,15 @@
   }
   .player-pill:hover{ border-color:var(--gold); }
   .player-pill.active{ background:var(--gold); color:var(--void); border-color:var(--gold); font-weight:600; }
+
+  .role-pill{
+    font-family:var(--display); font-size:12.5px; font-weight:600; letter-spacing:.03em;
+    text-transform:uppercase; padding:8px 16px;
+    background:var(--panel-2); border:1px solid var(--border); border-radius:4px;
+    cursor:pointer; color:var(--muted);
+  }
+  .role-pill:hover{ color:var(--text); border-color:var(--gold); }
+  .role-pill.active{ background:var(--gold); color:var(--void); border-color:var(--gold); }
   .skill-row{
     display:flex; align-items:center; gap:8px; padding:4px 0;
     border-bottom:1px solid rgba(255,255,255,0.04);
@@ -198,6 +207,7 @@
     <div class="nav-item" data-section="classes">Classes</div>
     <div class="nav-item" data-section="highscores">High Scores</div>
     <div class="nav-item" data-section="players">Players</div>
+    <div class="nav-item" data-section="roles">Roles</div>
     <div class="nav-item" data-section="fights">Fight Log</div>
   </nav>
 
@@ -360,6 +370,42 @@
               </table>
             </div>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ROLES -->
+    <section class="section" id="sec-roles">
+      <h1>Role Comparison</h1>
+      <div class="subtitle">Compare players within the same role against each other.</div>
+      <div class="card">
+        <div style="display:flex; gap:8px; margin-bottom:18px;">
+          <div class="role-pill active" data-role="healer">Healers</div>
+          <div class="role-pill" data-role="dps">DPS</div>
+          <div class="role-pill" data-role="boon">Boon Support</div>
+        </div>
+        <div id="roleBoonSelectWrap" style="display:none; margin-bottom:14px;">
+          <select id="roleBoonSelect" class="search" style="max-width:220px;">
+            <option value="quickness">Quickness</option>
+            <option value="alacrity">Alacrity</option>
+            <option value="stability">Stability</option>
+            <option value="aegis">Aegis</option>
+            <option value="protection">Protection</option>
+            <option value="regeneration">Regeneration</option>
+            <option value="resistance">Resistance</option>
+            <option value="might">Might</option>
+            <option value="fury">Fury</option>
+            <option value="vigor">Vigor</option>
+            <option value="swiftness">Swiftness</option>
+            <option value="resolution">Resolution</option>
+          </select>
+        </div>
+        <div class="chart-wrap tall"><canvas id="chartRole"></canvas></div>
+        <div class="table-scroll" style="margin-top:20px;">
+          <table id="tableRole">
+            <thead><tr></tr></thead>
+            <tbody></tbody>
+          </table>
         </div>
       </div>
     </section>
@@ -609,6 +655,7 @@ const lazyChartInit = {
   support: () => buildBarChart('chartHealFull', DATA.players, 'healing', DATA.players.length, COLORS.green, true),
   control: () => buildBarChart('chartCcFull', DATA.players, 'cc', DATA.players.length, COLORS.gold, true),
   classes: () => buildDonut('chartCompositionFull', DATA.summary.composition, 380),
+  roles: () => renderRoleView('healer'),
 };
 const initedSections = new Set();
 
@@ -688,6 +735,76 @@ async function selectPlayer(profileKey){
     return `<tr><td>${f.id}</td><td>${f.date}</td><td>${f.duration}</td><td class="num">${f.squad}</td><td class="num">${f.enemies}</td>${linkCell}</tr>`;
   }).join('');
 }
+
+// ---------- Role Comparison ----------
+let roleChartInstance = null;
+let currentRole = 'healer';
+
+function renderRoleView(role){
+  currentRole = role;
+  document.querySelectorAll('.role-pill').forEach(el => {
+    el.classList.toggle('active', el.dataset.role === role);
+  });
+  document.getElementById('roleBoonSelectWrap').style.display = role === 'boon' ? '' : 'none';
+
+  let sortKey, color, title, columns;
+  if (role === 'healer'){
+    sortKey = 'healing'; color = COLORS.green; title = 'Healing Leaders';
+    columns = [
+      ['name','Player'], ['prof','Profession'],
+      ['healing','Healing'], ['barrier','Barrier'], ['cleanse','Cleanses'], ['resurrects','Res.']
+    ];
+  } else if (role === 'dps'){
+    sortKey = 'dps'; color = COLORS.red; title = 'DPS Leaders';
+    columns = [
+      ['name','Player'], ['prof','Profession'],
+      ['dps','DPS'], ['totalDmg','Total Damage'], ['downContr','Down Contr.']
+    ];
+  } else {
+    const boon = document.getElementById('roleBoonSelect').value;
+    sortKey = '__boon__'; color = COLORS.gold; title = `${boon[0].toUpperCase()+boon.slice(1)} Generation`;
+    columns = [['name','Player'], ['prof','Profession'], ['__boon__', boon[0].toUpperCase()+boon.slice(1)]];
+  }
+
+  const getVal = (p) => role === 'boon' ? (p.boonGen[document.getElementById('roleBoonSelect').value] || 0) : p[sortKey];
+
+  const sorted = [...DATA.players].sort((a,b) => getVal(b) - getVal(a)).slice(0, 12).reverse();
+  const labels = sorted.map(p => `${p.name} (${p.prof})`);
+  const values = sorted.map(p => getVal(p));
+
+  if (roleChartInstance) roleChartInstance.destroy();
+  roleChartInstance = new Chart(document.getElementById('chartRole'), {
+    type:'bar',
+    data:{ labels, datasets:[{ data: values, backgroundColor: color, borderRadius:3 }] },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false }, title:{ display:true, text:title, color: COLORS.text, font:{ size:14 } } },
+      scales:{
+        x:{ grid:{ color: COLORS.grid }, ticks:{ callback:v=>fmt(v) } },
+        y:{ grid:{ display:false }, ticks:{ autoSkip:false, font:{ size:13 } } }
+      }
+    }
+  });
+
+  const allSorted = [...DATA.players].sort((a,b) => getVal(b) - getVal(a));
+  const thead = document.querySelector('#tableRole thead tr');
+  thead.innerHTML = columns.map(([key,label]) => `<th class="${key==='name'||key==='prof'?'':'num'}">${label}</th>`).join('');
+  const tbody = document.querySelector('#tableRole tbody');
+  tbody.innerHTML = allSorted.map(p => {
+    return '<tr>' + columns.map(([key]) => {
+      let val;
+      if (key === '__boon__') val = getVal(p);
+      else val = p[key];
+      const isNum = typeof val === 'number';
+      return `<td class="${isNum?'num':''}${key==='name'?' name-cell':''}">${isNum?fmt(val):val}</td>`;
+    }).join('') + '</tr>';
+  }).join('');
+}
+
+document.querySelectorAll('.role-pill').forEach(el => {
+  el.addEventListener('click', () => renderRoleView(el.dataset.role));
+});
+document.getElementById('roleBoonSelect').addEventListener('change', () => renderRoleView('boon'));
 
 document.querySelectorAll('.nav-item').forEach(item => {
   item.addEventListener('click', () => {
