@@ -1,0 +1,5 @@
+# Never commit your real dps.report token
+dps-report-token.txt
+
+# Elite Insights / TopStats working folders, if they ever end up here by accident
+json_output/
