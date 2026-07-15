@@ -140,6 +140,29 @@
     display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));
     gap:16px;
   }
+  .hs-group{ margin-bottom:26px; }
+  .hs-group:last-child{ margin-bottom:0; }
+  .hs-group-title{
+    font-family:var(--display); font-size:15px; font-weight:600; letter-spacing:.04em;
+    text-transform:uppercase; color:var(--text); margin:0 0 12px;
+    padding-bottom:6px; border-bottom:1px solid var(--border);
+  }
+
+  /* ---------- Player Profile ---------- */
+  .player-pill{
+    font-family:var(--mono); font-size:12.5px; padding:6px 10px;
+    background:var(--panel-2); border:1px solid var(--border); border-radius:4px;
+    cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    transition:background .12s, border-color .12s;
+  }
+  .player-pill:hover{ border-color:var(--gold); }
+  .player-pill.active{ background:var(--gold); color:var(--void); border-color:var(--gold); font-weight:600; }
+  .skill-row{
+    display:flex; align-items:center; gap:8px; padding:4px 0;
+    border-bottom:1px solid rgba(255,255,255,0.04);
+  }
+  .skill-row .skill-name{ flex:1; }
+  .skill-row .skill-count{ color:var(--gold); font-weight:600; }
   .hs-card{
     background:var(--panel-2); border:1px solid var(--border); border-radius:6px;
     padding:14px 16px;
@@ -149,14 +172,14 @@
     color:var(--gold); margin:0 0 10px; text-transform:uppercase;
   }
   .hs-row{
-    display:flex; justify-content:space-between; align-items:baseline;
+    display:flex; align-items:baseline;
     font-family:var(--mono); font-size:12px; padding:3px 0;
     border-bottom:1px solid rgba(255,255,255,0.04);
   }
   .hs-row:last-child{ border-bottom:none; }
   .hs-row .hs-rank{ color:var(--muted); width:16px; flex-shrink:0; }
-  .hs-row .hs-name{ flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:0 8px; }
-  .hs-row .hs-value{ color:var(--text); font-weight:600; }
+  .hs-row .hs-name{ width:150px; flex-shrink:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding-right:10px; }
+  .hs-row .hs-value{ color:var(--text); font-weight:600; text-align:left; }
 </style>
 </head>
 <body>
@@ -173,6 +196,7 @@
     <div class="nav-item" data-section="control">Control</div>
     <div class="nav-item" data-section="classes">Classes</div>
     <div class="nav-item" data-section="highscores">High Scores</div>
+    <div class="nav-item" data-section="players">Players</div>
     <div class="nav-item" data-section="fights">Fight Log</div>
   </nav>
 
@@ -196,9 +220,14 @@
           <div class="chart-wrap"><canvas id="chartDpsOverview"></canvas></div>
         </div>
         <div class="card">
-          <h2>Squad Composition</h2>
-          <div class="chart-wrap"><canvas id="chartComposition"></canvas></div>
+          <h2>Support Leaders — Healing</h2>
+          <div class="chart-wrap"><canvas id="chartHealOverview"></canvas></div>
         </div>
+      </div>
+
+      <div class="card">
+        <h2>Squad Composition</h2>
+        <div class="chart-wrap" style="max-width:420px; margin:0 auto;"><canvas id="chartComposition"></canvas></div>
       </div>
     </section>
 
@@ -294,7 +323,43 @@
       <h1>High Scores</h1>
       <div class="subtitle">Best single-fight performances across the session, not session totals.</div>
       <div class="card">
-        <div class="hs-grid" id="highScoresGrid"></div>
+        <div id="highScoresGrid"></div>
+      </div>
+    </section>
+
+    <!-- PLAYERS -->
+    <section class="section" id="sec-players">
+      <h1>Player Profile</h1>
+      <div class="subtitle">Session totals for one player: APM, top skills used, and every fight they were in.</div>
+      <div class="card">
+        <input class="search" id="playerSearch" placeholder="Search player name..." style="max-width:320px; margin-bottom:14px;">
+        <div id="playerList" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:6px; max-height:220px; overflow-y:auto; margin-bottom:18px;"></div>
+      </div>
+      <div class="card" id="playerProfileCard" style="display:none;">
+        <h2 id="profileName">Player</h2>
+        <div class="stat-grid" id="profileStatGrid" style="margin-bottom:20px;"></div>
+        <div class="two-col">
+          <div>
+            <h2 style="margin-top:0;">Top Skills Used</h2>
+            <div id="profileSkills" style="font-family:var(--mono); font-size:13px;"></div>
+          </div>
+          <div>
+            <h2 style="margin-top:0;">Fights</h2>
+            <div class="table-scroll" style="max-height:400px; overflow-y:auto;">
+              <table id="tableProfileFights">
+                <thead><tr>
+                  <th data-key="id">#</th>
+                  <th data-key="date">Date</th>
+                  <th data-key="duration">Duration</th>
+                  <th class="num" data-key="squad">Squad</th>
+                  <th class="num" data-key="enemies">Enemies</th>
+                  <th>Report</th>
+                </tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -387,9 +452,11 @@ function render(){
 
   // Overview charts are on the always-visible first tab, safe to build immediately.
   buildBarChart('chartDpsOverview', DATA.players, 'dps', 8, COLORS.red);
+  buildBarChart('chartHealOverview', DATA.players, 'healing', 8, COLORS.green);
   buildDonut('chartComposition', s.composition, 220);
   renderCompositionLegend(s.composition);
   renderHighScores(DATA.highScores);
+  renderPlayerList(DATA.players);
 
   buildTable('tableOffense', DATA.players, 'totalDmg', true);
   buildTable('tableSupport', DATA.players, 'healing', true);
@@ -455,18 +522,32 @@ function renderCompositionLegend(composition){
 function renderHighScores(highScores){
   const grid = document.getElementById('highScoresGrid');
   if (!grid || !highScores) return;
-  grid.innerHTML = highScores.map(hs => {
-    const rows = hs.entries.map((e, i) => {
-      const val = typeof e.value === 'number'
-        ? e.value.toLocaleString('en-US', { maximumFractionDigits: 2 })
-        : e.value;
-      return `<div class="hs-row">
-        <span class="hs-rank">${i+1}.</span>
-        <span class="hs-name">${e.name} (${e.prof})</span>
-        <span class="hs-value">${val}</span>
-      </div>`;
+
+  const groups = {};
+  highScores.forEach(hs => {
+    if (!groups[hs.group]) groups[hs.group] = [];
+    groups[hs.group].push(hs);
+  });
+  const groupOrder = ['Offense', 'Support', 'Defense', 'Other'];
+
+  grid.innerHTML = groupOrder.filter(g => groups[g]).map(groupName => {
+    const cards = groups[groupName].map(hs => {
+      const rows = hs.entries.map((e, i) => {
+        const val = typeof e.value === 'number'
+          ? e.value.toLocaleString('en-US', { maximumFractionDigits: 2 })
+          : e.value;
+        return `<div class="hs-row">
+          <span class="hs-rank">${i+1}.</span>
+          <span class="hs-name">${e.name} (${e.prof})</span>
+          <span class="hs-value">${val}</span>
+        </div>`;
+      }).join('');
+      return `<div class="hs-card"><h3>${hs.label}</h3>${rows}</div>`;
     }).join('');
-    return `<div class="hs-card"><h3>${hs.label}</h3>${rows}</div>`;
+    return `<div class="hs-group">
+      <h2 class="hs-group-title">${groupName}</h2>
+      <div class="hs-grid">${cards}</div>
+    </div>`;
   }).join('');
 }
 
@@ -529,6 +610,83 @@ const lazyChartInit = {
   classes: () => buildDonut('chartCompositionFull', DATA.summary.composition, 380),
 };
 const initedSections = new Set();
+
+// ---------- Player Profiles ----------
+const skillNameCache = {};
+
+async function resolveSkillNames(ids){
+  const toFetch = ids.filter(id => !(id in skillNameCache) && Number(id) > 0);
+  if (toFetch.length === 0) return;
+  try{
+    const res = await fetch(`https://api.guildwars2.com/v2/skills?ids=${toFetch.join(',')}`);
+    if (!res.ok) throw new Error('bad response');
+    const data = await res.json();
+    data.forEach(s => { skillNameCache[s.id] = s.name; });
+  }catch(e){
+    // API unreachable or ids invalid; fall back to raw IDs, no need to block rendering.
+  }
+  toFetch.forEach(id => { if (!(id in skillNameCache)) skillNameCache[id] = null; });
+}
+
+function renderPlayerList(players){
+  const list = document.getElementById('playerList');
+  const sorted = [...players].sort((a,b) => a.name.localeCompare(b.name));
+  list.innerHTML = sorted.map(p =>
+    `<div class="player-pill" data-key="${p.profileKey}">${p.name} (${p.prof})</div>`
+  ).join('');
+  list.querySelectorAll('.player-pill').forEach(el => {
+    el.addEventListener('click', () => selectPlayer(el.dataset.key));
+  });
+
+  document.getElementById('playerSearch').addEventListener('input', (e) => {
+    const q = e.target.value.toLowerCase();
+    list.querySelectorAll('.player-pill').forEach(el => {
+      el.style.display = el.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+  });
+}
+
+async function selectPlayer(profileKey){
+  const profile = DATA.playerProfiles[profileKey];
+  if (!profile) return;
+
+  document.querySelectorAll('.player-pill').forEach(el => {
+    el.classList.toggle('active', el.dataset.key === profileKey);
+  });
+
+  const card = document.getElementById('playerProfileCard');
+  card.style.display = '';
+  document.getElementById('profileName').textContent = `${profile.name} (${profile.prof})`;
+
+  const player = DATA.players.find(p => p.profileKey === profileKey);
+  const statRows = [
+    ['APM', profile.apm],
+    ['Active Time', `${profile.activeTimeMinutes} min`],
+    ['Fights', profile.fights.length],
+  ];
+  if (player) {
+    statRows.push(['DPS', fmt(player.dps)], ['Total Damage', fmt(player.totalDmg)]);
+  }
+  document.getElementById('profileStatGrid').innerHTML = statRows.map(([label,value]) =>
+    `<div class="stat"><div class="value">${value}</div><div class="label">${label}</div></div>`
+  ).join('');
+
+  document.getElementById('profileSkills').innerHTML = '<span style="color:var(--muted);">Loading skill names...</span>';
+  const skillIds = profile.topSkills.map(s => s.skillId);
+  await resolveSkillNames(skillIds);
+  document.getElementById('profileSkills').innerHTML = profile.topSkills.map(s => {
+    const name = skillNameCache[s.skillId] || `Skill #${s.skillId}`;
+    return `<div class="skill-row"><span class="skill-name">${name}</span><span class="skill-count">${s.count}</span></div>`;
+  }).join('');
+
+  const tbody = document.querySelector('#tableProfileFights tbody');
+  tbody.innerHTML = [...profile.fights].sort((a,b) => b.id - a.id).map(f => {
+    const linkCell = f.link
+      ? `<td><a href="${f.link}" target="_blank" rel="noopener">View →</a></td>`
+      : `<td style="color:var(--muted)">—</td>`;
+    return `<tr><td>${f.id}</td><td>${f.date}</td><td>${f.duration}</td><td class="num">${f.squad}</td><td class="num">${f.enemies}</td>${linkCell}</tr>`;
+  }).join('');
+}
 
 document.querySelectorAll('.nav-item').forEach(item => {
   item.addEventListener('click', () => {
