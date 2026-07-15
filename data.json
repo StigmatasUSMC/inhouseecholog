@@ -11,6 +11,8 @@
     "kdr": 1.76,
     "outgoingDamage": 47282484,
     "incomingDamage": 31265149,
+    "totalHealing": 15504739,
+    "damageMitigated": 23923380,
     "composition": {
       "Reaper": 4,
       "Troubadour": 1,
