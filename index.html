@@ -485,6 +485,8 @@ function render(){
     ['KDR', s.kdr, false],
     ['Outgoing Damage', fmt(s.outgoingDamage), false],
     ['Incoming Damage', fmt(s.incomingDamage), true],
+    ['Damage Mitigated', fmt(s.damageMitigated), false],
+    ['Heals Sent Out', fmt(s.totalHealing), false],
   ];
   document.getElementById('statGrid').innerHTML = stats.map(([label,value,enemy]) =>
     `<div class="stat${enemy?' enemy':''}"><div class="value">${value}</div><div class="label">${label}</div></div>`
