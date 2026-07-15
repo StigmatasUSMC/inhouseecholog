@@ -105,6 +105,7 @@
 
   .chart-wrap{ position:relative; height:340px; }
   .chart-wrap.tall{ height:460px; }
+  .chart-wrap.roster{ height:900px; }
   .two-col{ display:grid; grid-template-columns:1.4fr 1fr; gap:20px; }
   @media (max-width:900px){ .two-col{ grid-template-columns:1fr; } }
 
@@ -236,7 +237,7 @@
       <h1>Offensive Stats</h1>
       <div class="subtitle">Full roster, sortable. Click a column header to sort.</div>
       <div class="card">
-        <div class="chart-wrap"><canvas id="chartDpsFull"></canvas></div>
+        <div class="chart-wrap roster"><canvas id="chartDpsFull"></canvas></div>
       </div>
       <div class="card">
         <input class="search" id="searchOffense" placeholder="Filter by player or profession...">
@@ -261,7 +262,7 @@
       <h1>Support Stats</h1>
       <div class="subtitle">Full roster, sortable. Click a column header to sort.</div>
       <div class="card">
-        <div class="chart-wrap"><canvas id="chartHealFull"></canvas></div>
+        <div class="chart-wrap roster"><canvas id="chartHealFull"></canvas></div>
       </div>
       <div class="card">
         <input class="search" id="searchSupport" placeholder="Filter by player or profession...">
@@ -288,7 +289,7 @@
       <h1>Control Stats</h1>
       <div class="subtitle">Full roster, sortable. Click a column header to sort.</div>
       <div class="card">
-        <div class="chart-wrap"><canvas id="chartCcFull"></canvas></div>
+        <div class="chart-wrap roster"><canvas id="chartCcFull"></canvas></div>
       </div>
       <div class="card">
         <input class="search" id="searchControl" placeholder="Filter by player or profession...">
@@ -484,7 +485,7 @@ function buildBarChart(canvasId, players, key, n, color, horizontal){
       plugins:{ legend:{ display:false } },
       scales:{
         x:{ grid:{ color: COLORS.grid }, ticks:{ callback:v=>fmt(v) } },
-        y:{ grid:{ display:false }, ticks:{ autoSkip:false, font:{ size: horizontal?10:11 } } }
+        y:{ grid:{ display:false }, ticks:{ autoSkip:false, font:{ size: horizontal?13:13 } } }
       }
     }
   });
