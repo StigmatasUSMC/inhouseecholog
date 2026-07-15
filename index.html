@@ -162,6 +162,7 @@
       <div class="card">
         <h2>Raid Outcome</h2>
         <div class="stat-grid" id="statGrid"></div>
+        <div class="foot-note" id="raidOutcomeNote" style="margin-top:12px;"></div>
       </div>
 
       <div class="two-col">
@@ -278,6 +279,7 @@
               <th class="num" data-key="enemyDowned">Enemy Downed</th>
               <th class="num" data-key="enemyKilled">Enemy Killed</th>
               <th data-key="commander">Commander</th>
+              <th>Report</th>
             </tr></thead>
             <tbody></tbody>
           </table>
@@ -323,7 +325,8 @@ function render(){
   document.getElementById('dispatchLine').innerHTML =
     `<span class="prompt">$</span> wvw-report --session "${s.sessionLabel}" --fights ${s.fightCount} --guild "${s.guildName}"<span class="caret"></span>`;
   document.getElementById('overviewSubtitle').textContent =
-    `${s.sessionLabel} — ${s.fightCount} fights combined`;
+    `${s.sessionLabel} — ${s.fightCount} fights shown` +
+    (s.fightCountExcluded ? ` (${s.fightCountExcluded} excluded, <10v10)` : '');
   document.getElementById('fightsSubtitle').textContent = `${DATA.fights.length} fights recorded`;
 
   const stats = [
@@ -340,6 +343,13 @@ function render(){
     `<div class="stat${enemy?' enemy':''}"><div class="value">${value}</div><div class="label">${label}</div></div>`
   ).join('');
 
+  const outcomeNote = document.getElementById('raidOutcomeNote');
+  if (s.fightCountExcluded) {
+    outcomeNote.textContent =
+      `note: these totals are still combined across all ${s.fightCount + s.fightCountExcluded} recorded fights. ` +
+      `Only the Fight Log tab reflects the 10v10 filter.`;
+  }
+
   // Overview charts are on the always-visible first tab, safe to build immediately.
   buildBarChart('chartDpsOverview', DATA.players, 'dps', 8, COLORS.red);
   buildDonut('chartComposition', s.composition, 220);
@@ -347,7 +357,11 @@ function render(){
   buildTable('tableOffense', DATA.players, 'totalDmg', true);
   buildTable('tableSupport', DATA.players, 'healing', true);
   buildTable('tableControl', DATA.players, 'cc', true);
-  buildTable('tableFights', DATA.fights, 'id', false);
+  buildTable('tableFights', DATA.fights, 'id', false, (row) =>
+    row.link
+      ? `<td><a href="${row.link}" target="_blank" rel="noopener">View →</a></td>`
+      : `<td style="color:var(--muted)">—</td>`
+  );
 
   setupSearch('searchOffense', 'tableOffense');
   setupSearch('searchSupport', 'tableSupport');
@@ -385,23 +399,23 @@ function buildDonut(canvasId, composition, size){
   });
 }
 
-function buildTable(tableId, rows, defaultKey, isPlayerTable){
+function buildTable(tableId, rows, defaultKey, isPlayerTable, extraColumn){
   sortState[tableId] = { key: defaultKey, dir: -1 };
-  renderTableBody(tableId, rows, isPlayerTable);
+  renderTableBody(tableId, rows, isPlayerTable, extraColumn);
 
   const table = document.getElementById(tableId);
-  table.querySelectorAll('th').forEach(th => {
+  table.querySelectorAll('th[data-key]').forEach(th => {
     th.addEventListener('click', () => {
       const key = th.dataset.key;
       const state = sortState[tableId];
       state.dir = (state.key === key) ? -state.dir : -1;
       state.key = key;
-      renderTableBody(tableId, rows, isPlayerTable);
+      renderTableBody(tableId, rows, isPlayerTable, extraColumn);
     });
   });
 }
 
-function renderTableBody(tableId, rows, isPlayerTable){
+function renderTableBody(tableId, rows, isPlayerTable, extraColumn){
   const state = sortState[tableId];
   const sorted = [...rows].sort((a,b)=>{
     const av = a[state.key], bv = b[state.key];
@@ -410,15 +424,17 @@ function renderTableBody(tableId, rows, isPlayerTable){
   });
 
   const tbody = document.querySelector(`#${tableId} tbody`);
-  const cols = [...document.querySelectorAll(`#${tableId} th`)].map(th => th.dataset.key);
+  const cols = [...document.querySelectorAll(`#${tableId} th[data-key]`)].map(th => th.dataset.key);
 
   tbody.innerHTML = sorted.map(row => {
-    return '<tr>' + cols.map(key => {
+    let rowHtml = '<tr>' + cols.map(key => {
       const val = row[key];
       const isNum = typeof val === 'number';
       const display = isNum ? fmt(val) : val;
       return `<td class="${isNum?'num':''}">${display}</td>`;
-    }).join('') + '</tr>';
+    }).join('');
+    if (extraColumn) rowHtml += extraColumn(row);
+    return rowHtml + '</tr>';
   }).join('');
 }
 

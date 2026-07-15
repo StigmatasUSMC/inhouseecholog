@@ -2,7 +2,8 @@
   "summary": {
     "guildName": "Echoes of the Vanguard (ECHO)",
     "sessionLabel": "June 14, 2026",
-    "fightCount": 40,
+    "fightCount": 23,
+    "fightCountExcluded": 17,
     "enemyKilled": 257,
     "enemyDowned": 397,
     "squadDowned": 195,
@@ -511,404 +512,257 @@
   ],
   "fights": [
     {
-      "id": "1",
-      "date": "2026-07-14",
-      "duration": "00m 31s 913ms",
-      "squad": 8,
-      "enemies": 6,
-      "enemyDowned": 7,
-      "enemyKilled": 6,
-      "commander": ""
-    },
-    {
-      "id": "2",
-      "date": "2026-07-14",
-      "duration": "00m 41s 746ms",
-      "squad": 7,
-      "enemies": 3,
-      "enemyDowned": 3,
-      "enemyKilled": 1,
-      "commander": ""
-    },
-    {
-      "id": "3",
-      "date": "2026-07-14",
-      "duration": "00m 44s 151ms",
-      "squad": 7,
-      "enemies": 2,
-      "enemyDowned": 0,
-      "enemyKilled": 0,
-      "commander": ""
-    },
-    {
-      "id": "4",
+      "id": 4,
       "date": "2026-07-14",
       "duration": "02m 49s 239ms",
       "squad": 20,
       "enemies": 39,
       "enemyDowned": 29,
       "enemyKilled": 19,
-      "commander": ""
+      "commander": "",
+      "link": ""
     },
     {
-      "id": "5",
+      "id": 5,
       "date": "2026-07-14",
       "duration": "02m 25s 626ms",
       "squad": 13,
       "enemies": 35,
       "enemyDowned": 35,
       "enemyKilled": 23,
-      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892"
+      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
+      "link": ""
     },
     {
-      "id": "6",
+      "id": 6,
       "date": "2026-07-14",
       "duration": "01m 13s 658ms",
       "squad": 14,
       "enemies": 32,
       "enemyDowned": 24,
       "enemyKilled": 17,
-      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892"
+      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
+      "link": ""
     },
     {
-      "id": "7",
-      "date": "2026-07-14",
-      "duration": "00m 42s 10ms",
-      "squad": 17,
-      "enemies": 1,
-      "enemyDowned": 0,
-      "enemyKilled": 0,
-      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892"
-    },
-    {
-      "id": "8",
-      "date": "2026-07-14",
-      "duration": "02m 21s 376ms",
-      "squad": 18,
-      "enemies": 3,
-      "enemyDowned": 0,
-      "enemyKilled": 0,
-      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892"
-    },
-    {
-      "id": "9",
+      "id": 9,
       "date": "2026-07-14",
       "duration": "01m 42s 408ms",
       "squad": 19,
       "enemies": 50,
       "enemyDowned": 0,
       "enemyKilled": 0,
-      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892"
+      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
+      "link": ""
     },
     {
-      "id": "10",
-      "date": "2026-07-14",
-      "duration": "00m 59s 984ms",
-      "squad": 20,
-      "enemies": 2,
-      "enemyDowned": 0,
-      "enemyKilled": 0,
-      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892"
-    },
-    {
-      "id": "11",
-      "date": "2026-07-14",
-      "duration": "00m 56s 278ms",
-      "squad": 20,
-      "enemies": 1,
-      "enemyDowned": 1,
-      "enemyKilled": 1,
-      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892"
-    },
-    {
-      "id": "12",
-      "date": "2026-07-14",
-      "duration": "00m 10s 828ms",
-      "squad": 19,
-      "enemies": 1,
-      "enemyDowned": 0,
-      "enemyKilled": 0,
-      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892"
-    },
-    {
-      "id": "13",
+      "id": 13,
       "date": "2026-07-14",
       "duration": "01m 33s 772ms",
       "squad": 21,
       "enemies": 39,
       "enemyDowned": 42,
       "enemyKilled": 35,
-      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892"
+      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
+      "link": ""
     },
     {
-      "id": "14",
-      "date": "2026-07-14",
-      "duration": "01m 34s 35ms",
-      "squad": 21,
-      "enemies": 2,
-      "enemyDowned": 1,
-      "enemyKilled": 1,
-      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892"
-    },
-    {
-      "id": "15",
+      "id": 15,
       "date": "2026-07-14",
       "duration": "01m 44s 74ms",
       "squad": 21,
       "enemies": 41,
       "enemyDowned": 27,
       "enemyKilled": 26,
-      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892"
+      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
+      "link": ""
     },
     {
-      "id": "16",
-      "date": "2026-07-14",
-      "duration": "00m 43s 118ms",
-      "squad": 17,
-      "enemies": 3,
-      "enemyDowned": 1,
-      "enemyKilled": 1,
-      "commander": ""
-    },
-    {
-      "id": "17",
+      "id": 17,
       "date": "2026-07-14",
       "duration": "00m 13s 46ms",
       "squad": 11,
       "enemies": 10,
       "enemyDowned": 0,
       "enemyKilled": 0,
-      "commander": ""
+      "commander": "",
+      "link": ""
     },
     {
-      "id": "18",
+      "id": 18,
       "date": "2026-07-14",
       "duration": "02m 16s 488ms",
       "squad": 21,
       "enemies": 48,
       "enemyDowned": 28,
       "enemyKilled": 9,
-      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892"
+      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
+      "link": ""
     },
     {
-      "id": "19",
+      "id": 19,
       "date": "2026-07-14",
       "duration": "01m 51s 869ms",
       "squad": 22,
       "enemies": 93,
       "enemyDowned": 50,
       "enemyKilled": 20,
-      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892"
+      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
+      "link": ""
     },
     {
-      "id": "20",
+      "id": 20,
       "date": "2026-07-14",
       "duration": "01m 26s 349ms",
       "squad": 21,
       "enemies": 39,
       "enemyDowned": 5,
       "enemyKilled": 2,
-      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892"
+      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
+      "link": ""
     },
     {
-      "id": "21",
+      "id": 21,
       "date": "2026-07-14",
       "duration": "04m 17s 84ms",
       "squad": 22,
       "enemies": 90,
       "enemyDowned": 31,
       "enemyKilled": 21,
-      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892"
+      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
+      "link": ""
     },
     {
-      "id": "22",
-      "date": "2026-07-14",
-      "duration": "00m 15s 334ms",
-      "squad": 12,
-      "enemies": 2,
-      "enemyDowned": 0,
-      "enemyKilled": 0,
-      "commander": ""
-    },
-    {
-      "id": "23",
-      "date": "2026-07-14",
-      "duration": "00m 13s 522ms",
-      "squad": 10,
-      "enemies": 2,
-      "enemyDowned": 0,
-      "enemyKilled": 0,
-      "commander": ""
-    },
-    {
-      "id": "24",
-      "date": "2026-07-14",
-      "duration": "00m 15s 183ms",
-      "squad": 11,
-      "enemies": 1,
-      "enemyDowned": 0,
-      "enemyKilled": 0,
-      "commander": ""
-    },
-    {
-      "id": "25",
+      "id": 25,
       "date": "2026-07-14",
       "duration": "01m 10s 594ms",
       "squad": 23,
       "enemies": 36,
       "enemyDowned": 1,
       "enemyKilled": 1,
-      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892"
+      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
+      "link": ""
     },
     {
-      "id": "26",
-      "date": "2026-07-14",
-      "duration": "00m 20s 948ms",
-      "squad": 23,
-      "enemies": 7,
-      "enemyDowned": 7,
-      "enemyKilled": 6,
-      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892"
-    },
-    {
-      "id": "27",
+      "id": 27,
       "date": "2026-07-14",
       "duration": "01m 21s 12ms",
       "squad": 23,
       "enemies": 44,
       "enemyDowned": 7,
       "enemyKilled": 2,
-      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892"
+      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
+      "link": ""
     },
     {
-      "id": "28",
+      "id": 28,
       "date": "2026-07-14",
       "duration": "01m 43s 588ms",
       "squad": 24,
       "enemies": 40,
       "enemyDowned": 2,
       "enemyKilled": 1,
-      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892"
+      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
+      "link": ""
     },
     {
-      "id": "29",
+      "id": 29,
       "date": "2026-07-14",
       "duration": "00m 59s 551ms",
       "squad": 24,
       "enemies": 25,
       "enemyDowned": 25,
       "enemyKilled": 17,
-      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892"
+      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
+      "link": ""
     },
     {
-      "id": "30",
+      "id": 30,
       "date": "2026-07-14",
       "duration": "01m 29s 852ms",
       "squad": 23,
       "enemies": 14,
       "enemyDowned": 1,
       "enemyKilled": 1,
-      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892"
+      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
+      "link": ""
     },
     {
-      "id": "31",
+      "id": 31,
       "date": "2026-07-14",
       "duration": "00m 49s 546ms",
       "squad": 23,
       "enemies": 29,
       "enemyDowned": 25,
       "enemyKilled": 18,
-      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892"
+      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
+      "link": ""
     },
     {
-      "id": "32",
-      "date": "2026-07-14",
-      "duration": "00m 21s 992ms",
-      "squad": 22,
-      "enemies": 7,
-      "enemyDowned": 0,
-      "enemyKilled": 0,
-      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892"
-    },
-    {
-      "id": "33",
+      "id": 33,
       "date": "2026-07-14",
       "duration": "01m 06s 858ms",
       "squad": 24,
       "enemies": 29,
       "enemyDowned": 11,
       "enemyKilled": 5,
-      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892"
+      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
+      "link": ""
     },
     {
-      "id": "34",
+      "id": 34,
       "date": "2026-07-14",
       "duration": "01m 12s 914ms",
       "squad": 25,
       "enemies": 12,
       "enemyDowned": 1,
       "enemyKilled": 1,
-      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892"
+      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
+      "link": ""
     },
     {
-      "id": "35",
-      "date": "2026-07-14",
-      "duration": "00m 30s 611ms",
-      "squad": 23,
-      "enemies": 8,
-      "enemyDowned": 3,
-      "enemyKilled": 3,
-      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892"
-    },
-    {
-      "id": "36",
+      "id": 36,
       "date": "2026-07-14",
       "duration": "02m 55s 525ms",
       "squad": 24,
       "enemies": 29,
       "enemyDowned": 20,
       "enemyKilled": 13,
-      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892"
+      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
+      "link": ""
     },
     {
-      "id": "37",
+      "id": 37,
       "date": "2026-07-14",
       "duration": "00m 47s 825ms",
       "squad": 22,
       "enemies": 13,
       "enemyDowned": 2,
       "enemyKilled": 2,
-      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892"
+      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
+      "link": ""
     },
     {
-      "id": "38",
+      "id": 38,
       "date": "2026-07-14",
       "duration": "01m 08s 510ms",
       "squad": 23,
       "enemies": 54,
       "enemyDowned": 2,
       "enemyKilled": 0,
-      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892"
+      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
+      "link": ""
     },
     {
-      "id": "39",
-      "date": "2026-07-14",
-      "duration": "00m 12s 260ms",
-      "squad": 21,
-      "enemies": 3,
-      "enemyDowned": 0,
-      "enemyKilled": 0,
-      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892"
-    },
-    {
-      "id": "40",
+      "id": 40,
       "date": "2026-07-14",
       "duration": "01m 24s 53ms",
       "squad": 23,
       "enemies": 38,
       "enemyDowned": 6,
       "enemyKilled": 5,
-      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892"
+      "commander": "Pintsize Vanguard|Firebrand|WarHawk.1892",
+      "link": ""
     }
   ]
 }
