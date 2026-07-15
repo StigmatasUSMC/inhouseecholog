@@ -89,15 +89,18 @@
     text-transform:uppercase; color:var(--muted); margin:0 0 16px;
   }
   .stat-grid{
-    display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr));
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(175px,1fr));
     gap:14px; margin-bottom:6px;
   }
   .stat{
     background:var(--panel-2); border:1px solid var(--border); border-left:3px solid var(--gold);
-    border-radius:4px; padding:14px 16px;
+    border-radius:4px; padding:14px 16px; overflow:hidden;
   }
   .stat.enemy{ border-left-color:var(--red); }
-  .stat .value{ font-family:var(--mono); font-size:24px; font-weight:600; }
+  .stat .value{
+    font-family:var(--mono); font-weight:600; white-space:nowrap;
+    font-size:clamp(15px, 2.1vw, 24px);
+  }
   .stat .label{
     font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em;
     margin-top:4px;
@@ -167,6 +170,23 @@
   }
   .role-pill:hover{ color:var(--text); border-color:var(--gold); }
   .role-pill.active{ background:var(--gold); color:var(--void); border-color:var(--gold); }
+
+  .mode-pill{
+    font-family:var(--mono); font-size:12px; padding:6px 14px;
+    background:var(--panel-2); border:1px solid var(--border); border-radius:20px;
+    cursor:pointer; color:var(--muted);
+  }
+  .mode-pill:hover{ color:var(--text); }
+  .mode-pill.active{ background:var(--green); color:var(--void); border-color:var(--green); font-weight:600; }
+
+  .check-item{
+    display:flex; align-items:center; gap:6px; font-family:var(--mono); font-size:12px;
+    background:var(--panel-2); border:1px solid var(--border); border-radius:4px;
+    padding:5px 8px; cursor:pointer; overflow:hidden;
+  }
+  .check-item:hover{ border-color:var(--gold); }
+  .check-item input{ flex-shrink:0; }
+  .check-item span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .skill-row{
     display:flex; align-items:center; gap:8px; padding:4px 0;
     border-bottom:1px solid rgba(255,255,255,0.04);
@@ -225,15 +245,14 @@
         <div class="foot-note" id="raidOutcomeNote" style="margin-top:12px;"></div>
       </div>
 
-      <div class="two-col">
-        <div class="card">
-          <h2>Offensive Leaders — DPS</h2>
-          <div class="chart-wrap"><canvas id="chartDpsOverview"></canvas></div>
-        </div>
-        <div class="card">
-          <h2>Support Leaders — Healing</h2>
-          <div class="chart-wrap"><canvas id="chartHealOverview"></canvas></div>
-        </div>
+      <div class="card">
+        <h2>Offensive Leaders — DPS</h2>
+        <div class="chart-wrap"><canvas id="chartDpsOverview"></canvas></div>
+      </div>
+
+      <div class="card">
+        <h2>Support Leaders — Healing</h2>
+        <div class="chart-wrap"><canvas id="chartHealOverview"></canvas></div>
       </div>
 
       <div class="card">
@@ -377,9 +396,9 @@
     <!-- ROLES -->
     <section class="section" id="sec-roles">
       <h1>Role Comparison</h1>
-      <div class="subtitle">Compare players within the same role against each other.</div>
+      <div class="subtitle">Compare players within the same role, or pick your own set of players to compare directly.</div>
       <div class="card">
-        <div style="display:flex; gap:8px; margin-bottom:18px;">
+        <div style="display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap;">
           <div class="role-pill active" data-role="healer">Healers</div>
           <div class="role-pill" data-role="dps">DPS</div>
           <div class="role-pill" data-role="boon">Boon Support</div>
@@ -400,6 +419,20 @@
             <option value="resolution">Resolution</option>
           </select>
         </div>
+
+        <div style="display:flex; gap:8px; margin-bottom:14px;">
+          <div class="mode-pill active" data-mode="top12">Top 12</div>
+          <div class="mode-pill" data-mode="custom">Pick Players</div>
+        </div>
+
+        <div id="rolePlayerPicker" style="display:none; margin-bottom:18px;">
+          <input class="search" id="rolePlayerSearch" placeholder="Search player name..." style="max-width:320px; margin-bottom:10px;">
+          <div id="rolePlayerChecklist" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:6px; max-height:220px; overflow-y:auto;"></div>
+          <div style="margin-top:8px;">
+            <span class="foot-note" id="roleSelectionCount"></span>
+          </div>
+        </div>
+
         <div class="chart-wrap tall"><canvas id="chartRole"></canvas></div>
         <div class="table-scroll" style="margin-top:20px;">
           <table id="tableRole">
@@ -657,7 +690,7 @@ const lazyChartInit = {
   support: () => buildBarChart('chartHealFull', DATA.players, 'healing', DATA.players.length, COLORS.green, true),
   control: () => buildBarChart('chartCcFull', DATA.players, 'cc', DATA.players.length, COLORS.gold, true),
   classes: () => buildDonut('chartCompositionFull', DATA.summary.composition, 380),
-  roles: () => renderRoleView('healer'),
+  roles: () => { renderRolePlayerChecklist(); updateRoleSelectionCount(); renderRoleView('healer'); },
 };
 const initedSections = new Set();
 
@@ -741,6 +774,39 @@ async function selectPlayer(profileKey){
 // ---------- Role Comparison ----------
 let roleChartInstance = null;
 let currentRole = 'healer';
+let roleMode = 'top12';
+let selectedRoleKeys = new Set();
+
+function renderRolePlayerChecklist(){
+  const list = document.getElementById('rolePlayerChecklist');
+  const sorted = [...DATA.players].sort((a,b) => a.name.localeCompare(b.name));
+  list.innerHTML = sorted.map(p => `
+    <label class="check-item">
+      <input type="checkbox" data-key="${p.profileKey}" ${selectedRoleKeys.has(p.profileKey) ? 'checked' : ''}>
+      <span>${p.name} (${p.prof})</span>
+    </label>
+  `).join('');
+  list.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      if (cb.checked) selectedRoleKeys.add(cb.dataset.key);
+      else selectedRoleKeys.delete(cb.dataset.key);
+      updateRoleSelectionCount();
+      renderRoleView(currentRole);
+    });
+  });
+
+  document.getElementById('rolePlayerSearch').addEventListener('input', (e) => {
+    const q = e.target.value.toLowerCase();
+    list.querySelectorAll('.check-item').forEach(el => {
+      el.style.display = el.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+  });
+}
+
+function updateRoleSelectionCount(){
+  const el = document.getElementById('roleSelectionCount');
+  el.textContent = `${selectedRoleKeys.size} player${selectedRoleKeys.size === 1 ? '' : 's'} selected`;
+}
 
 function renderRoleView(role){
   currentRole = role;
@@ -770,11 +836,25 @@ function renderRoleView(role){
 
   const getVal = (p) => role === 'boon' ? (p.boonGen[document.getElementById('roleBoonSelect').value] || 0) : p[sortKey];
 
-  const sorted = [...DATA.players].sort((a,b) => getVal(b) - getVal(a)).slice(0, 12).reverse();
-  const labels = sorted.map(p => `${p.name} (${p.prof})`);
-  const values = sorted.map(p => getVal(p));
+  const pool = roleMode === 'custom'
+    ? DATA.players.filter(p => selectedRoleKeys.has(p.profileKey))
+    : DATA.players;
+  const chartPlayers = [...pool].sort((a,b) => getVal(b) - getVal(a)).slice(0, roleMode === 'custom' ? pool.length : 12);
 
   if (roleChartInstance) roleChartInstance.destroy();
+
+  if (chartPlayers.length === 0){
+    const ctx = document.getElementById('chartRole').getContext('2d');
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    document.querySelector('#tableRole thead tr').innerHTML = '';
+    document.querySelector('#tableRole tbody').innerHTML =
+      '<tr><td style="color:var(--muted); padding:16px;">Select at least one player above to compare.</td></tr>';
+    return;
+  }
+
+  const labels = chartPlayers.map(p => `${p.name} (${p.prof})`);
+  const values = chartPlayers.map(p => getVal(p));
+
   roleChartInstance = new Chart(document.getElementById('chartRole'), {
     type:'bar',
     data:{ labels, datasets:[{ data: values, backgroundColor: color, borderRadius:3 }] },
@@ -788,11 +868,11 @@ function renderRoleView(role){
     }
   });
 
-  const allSorted = [...DATA.players].sort((a,b) => getVal(b) - getVal(a));
+  const tablePool = roleMode === 'custom' ? chartPlayers : [...DATA.players].sort((a,b) => getVal(b) - getVal(a));
   const thead = document.querySelector('#tableRole thead tr');
   thead.innerHTML = columns.map(([key,label]) => `<th class="${key==='name'||key==='prof'?'':'num'}">${label}</th>`).join('');
   const tbody = document.querySelector('#tableRole tbody');
-  tbody.innerHTML = allSorted.map(p => {
+  tbody.innerHTML = tablePool.map(p => {
     return '<tr>' + columns.map(([key]) => {
       let val;
       if (key === '__boon__') val = getVal(p);
@@ -807,6 +887,14 @@ document.querySelectorAll('.role-pill').forEach(el => {
   el.addEventListener('click', () => renderRoleView(el.dataset.role));
 });
 document.getElementById('roleBoonSelect').addEventListener('change', () => renderRoleView('boon'));
+document.querySelectorAll('.mode-pill').forEach(el => {
+  el.addEventListener('click', () => {
+    roleMode = el.dataset.mode;
+    document.querySelectorAll('.mode-pill').forEach(m => m.classList.toggle('active', m === el));
+    document.getElementById('rolePlayerPicker').style.display = roleMode === 'custom' ? '' : 'none';
+    renderRoleView(currentRole);
+  });
+});
 
 document.querySelectorAll('.nav-item').forEach(item => {
   item.addEventListener('click', () => {
