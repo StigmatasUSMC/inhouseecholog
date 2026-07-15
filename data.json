@@ -44,7 +44,10 @@
       "interrupts": 25,
       "downContr": 443872,
       "resurrects": 1,
-      "profileKey": "Reaper|Chicabamba"
+      "profileKey": "Reaper|Chicabamba",
+      "boonGen": {
+        "regeneration": 249333
+      }
     },
     {
       "name": "Filthy Casual Derp",
@@ -61,7 +64,18 @@
       "interrupts": 3,
       "downContr": 24417,
       "resurrects": 2,
-      "profileKey": "Troubadour|Filthy Casual Derp"
+      "profileKey": "Troubadour|Filthy Casual Derp",
+      "boonGen": {
+        "might": 14711117,
+        "fury": 757285,
+        "quickness": 341138,
+        "protection": 466819,
+        "regeneration": 829692,
+        "aegis": 53374,
+        "stability": 1462342,
+        "swiftness": 126828,
+        "resistance": 167680
+      }
     },
     {
       "name": "Gwaizin",
@@ -78,7 +92,13 @@
       "interrupts": 10,
       "downContr": 360903,
       "resurrects": 3,
-      "profileKey": "Amalgam|Gwaizin"
+      "profileKey": "Amalgam|Gwaizin",
+      "boonGen": {
+        "might": 938922,
+        "fury": 872774,
+        "regeneration": 11864,
+        "swiftness": 87318
+      }
     },
     {
       "name": "Kintsvgi",
@@ -95,7 +115,17 @@
       "interrupts": 10,
       "downContr": 47585,
       "resurrects": 0,
-      "profileKey": "Dragonhunter|Kintsvgi"
+      "profileKey": "Dragonhunter|Kintsvgi",
+      "boonGen": {
+        "might": 135188,
+        "fury": 144837,
+        "quickness": 50981,
+        "vigor": 90274,
+        "aegis": 47356,
+        "stability": 230816,
+        "swiftness": 40001,
+        "resolution": 114032
+      }
     },
     {
       "name": "Mr Globby Gloop",
@@ -112,7 +142,18 @@
       "interrupts": 28,
       "downContr": 55521,
       "resurrects": 6,
-      "profileKey": "Guardian|Mr Globby Gloop"
+      "profileKey": "Guardian|Mr Globby Gloop",
+      "boonGen": {
+        "might": 44370619,
+        "fury": 1537298,
+        "quickness": 1004731,
+        "protection": 2358332,
+        "regeneration": 1842310,
+        "aegis": 3252734,
+        "stability": 9726770,
+        "swiftness": 10860173,
+        "resolution": 374117
+      }
     },
     {
       "name": "Yourfightiswithme",
@@ -129,7 +170,21 @@
       "interrupts": 5,
       "downContr": 12717,
       "resurrects": 2,
-      "profileKey": "Firebrand|Yourfightiswithme"
+      "profileKey": "Firebrand|Yourfightiswithme",
+      "boonGen": {
+        "might": 26120605,
+        "fury": 5347,
+        "quickness": 1021769,
+        "alacrity": 23602,
+        "protection": 967318,
+        "regeneration": 974954,
+        "vigor": 589413,
+        "aegis": 770947,
+        "stability": 11047281,
+        "swiftness": 4420999,
+        "resistance": 3455,
+        "resolution": 2448918
+      }
     },
     {
       "name": "Yturo",
@@ -146,7 +201,16 @@
       "interrupts": 13,
       "downContr": 473607,
       "resurrects": 2,
-      "profileKey": "Tempest|Yturo"
+      "profileKey": "Tempest|Yturo",
+      "boonGen": {
+        "might": 10460655,
+        "fury": 1855994,
+        "protection": 502375,
+        "regeneration": 0,
+        "vigor": 1819,
+        "stability": 335480,
+        "swiftness": 986582
+      }
     },
     {
       "name": "Cursed Crystal",
@@ -163,7 +227,14 @@
       "interrupts": 20,
       "downContr": 189562,
       "resurrects": 1,
-      "profileKey": "Evoker|Cursed Crystal"
+      "profileKey": "Evoker|Cursed Crystal",
+      "boonGen": {
+        "might": 3558955,
+        "fury": 1265188,
+        "protection": 10986,
+        "regeneration": 16077,
+        "swiftness": 130394
+      }
     },
     {
       "name": "Taegarro",
@@ -180,7 +251,13 @@
       "interrupts": 27,
       "downContr": 673726,
       "resurrects": 3,
-      "profileKey": "Amalgam|Taegarro"
+      "profileKey": "Amalgam|Taegarro",
+      "boonGen": {
+        "might": 4409029,
+        "fury": 1159155,
+        "regeneration": 23502,
+        "swiftness": 111427
+      }
     },
     {
       "name": "Valens Frostpaw",
@@ -197,7 +274,20 @@
       "interrupts": 16,
       "downContr": 20418,
       "resurrects": 7,
-      "profileKey": "Firebrand|Valens Frostpaw"
+      "profileKey": "Firebrand|Valens Frostpaw",
+      "boonGen": {
+        "might": 24898939,
+        "quickness": 1417255,
+        "alacrity": 36895,
+        "protection": 2301246,
+        "regeneration": 696357,
+        "vigor": 163974,
+        "aegis": 1006808,
+        "stability": 8381321,
+        "swiftness": 1447048,
+        "resistance": 277638,
+        "resolution": 2384417
+      }
     },
     {
       "name": "Pintsize Vanguard",
@@ -214,7 +304,21 @@
       "interrupts": 12,
       "downContr": 143185,
       "resurrects": 7,
-      "profileKey": "Firebrand|Pintsize Vanguard"
+      "profileKey": "Firebrand|Pintsize Vanguard",
+      "boonGen": {
+        "might": 7345672,
+        "fury": 1848,
+        "quickness": 698285,
+        "alacrity": 30796,
+        "protection": 2362896,
+        "regeneration": 168094,
+        "vigor": 155451,
+        "aegis": 204443,
+        "stability": 8396898,
+        "swiftness": 419888,
+        "resistance": 262770,
+        "resolution": 2312565
+      }
     },
     {
       "name": "Fab Phen",
@@ -231,7 +335,10 @@
       "interrupts": 0,
       "downContr": 215121,
       "resurrects": 0,
-      "profileKey": "Untamed|Fab Phen"
+      "profileKey": "Untamed|Fab Phen",
+      "boonGen": {
+        "might": 1101079
+      }
     },
     {
       "name": "Strong Man Stroody",
@@ -248,7 +355,19 @@
       "interrupts": 4,
       "downContr": 18131,
       "resurrects": 12,
-      "profileKey": "Paragon|Strong Man Stroody"
+      "profileKey": "Paragon|Strong Man Stroody",
+      "boonGen": {
+        "might": 27001652,
+        "fury": 2093570,
+        "quickness": 643460,
+        "protection": 389756,
+        "regeneration": 2438313,
+        "vigor": 1272913,
+        "aegis": 81061,
+        "stability": 18549,
+        "swiftness": 703156,
+        "resolution": 397844
+      }
     },
     {
       "name": "Loo Sii",
@@ -265,7 +384,10 @@
       "interrupts": 23,
       "downContr": 287486,
       "resurrects": 2,
-      "profileKey": "Reaper|Loo Sii"
+      "profileKey": "Reaper|Loo Sii",
+      "boonGen": {
+        "regeneration": 3994
+      }
     },
     {
       "name": "Kintsvgi",
@@ -282,7 +404,19 @@
       "interrupts": 17,
       "downContr": 37047,
       "resurrects": 1,
-      "profileKey": "Luminary|Kintsvgi"
+      "profileKey": "Luminary|Kintsvgi",
+      "boonGen": {
+        "might": 32929303,
+        "fury": 2057473,
+        "quickness": 934576,
+        "protection": 1975530,
+        "regeneration": 1909539,
+        "aegis": 747042,
+        "stability": 8460572,
+        "swiftness": 5654321,
+        "resistance": 803485,
+        "resolution": 3302762
+      }
     },
     {
       "name": "Blu\u00e9 Fat\u00e9",
@@ -299,7 +433,15 @@
       "interrupts": 6,
       "downContr": 87472,
       "resurrects": 1,
-      "profileKey": "Catalyst|Blu\u00e9 Fat\u00e9"
+      "profileKey": "Catalyst|Blu\u00e9 Fat\u00e9",
+      "boonGen": {
+        "might": 4620873,
+        "fury": 568739,
+        "protection": 213912,
+        "regeneration": 12957,
+        "swiftness": 50925,
+        "resolution": 30214
+      }
     },
     {
       "name": "Ito Ai",
@@ -316,7 +458,20 @@
       "interrupts": 1,
       "downContr": 74825,
       "resurrects": 0,
-      "profileKey": "Tempest|Ito Ai"
+      "profileKey": "Tempest|Ito Ai",
+      "boonGen": {
+        "might": 19628294,
+        "fury": 1206747,
+        "quickness": 8987,
+        "protection": 405376,
+        "regeneration": 116944,
+        "vigor": 151374,
+        "aegis": 0,
+        "stability": 64785,
+        "swiftness": 285092,
+        "resistance": 39058,
+        "resolution": 13418
+      }
     },
     {
       "name": "Cheeeky Besitos",
@@ -333,7 +488,16 @@
       "interrupts": 3,
       "downContr": 9707,
       "resurrects": 1,
-      "profileKey": "Evoker|Cheeeky Besitos"
+      "profileKey": "Evoker|Cheeeky Besitos",
+      "boonGen": {
+        "might": 3214126,
+        "protection": 150400,
+        "regeneration": 3044224,
+        "vigor": 715302,
+        "aegis": 302430,
+        "resistance": 326162,
+        "resolution": 391534
+      }
     },
     {
       "name": "Banner Interrupted",
@@ -350,7 +514,20 @@
       "interrupts": 6,
       "downContr": 10374,
       "resurrects": 1,
-      "profileKey": "Paragon|Banner Interrupted"
+      "profileKey": "Paragon|Banner Interrupted",
+      "boonGen": {
+        "might": 42855103,
+        "fury": 3675551,
+        "quickness": 1346010,
+        "protection": 316259,
+        "regeneration": 3522630,
+        "vigor": 2209804,
+        "aegis": 130297,
+        "stability": 322852,
+        "swiftness": 3261246,
+        "resistance": 623399,
+        "resolution": 1082799
+      }
     },
     {
       "name": "Vhaul Starcrusher",
@@ -367,7 +544,19 @@
       "interrupts": 10,
       "downContr": 15109,
       "resurrects": 4,
-      "profileKey": "Firebrand|Vhaul Starcrusher"
+      "profileKey": "Firebrand|Vhaul Starcrusher",
+      "boonGen": {
+        "might": 3833338,
+        "quickness": 542046,
+        "protection": 646051,
+        "regeneration": 80644,
+        "vigor": 104964,
+        "aegis": 327716,
+        "stability": 5259632,
+        "swiftness": 893349,
+        "resistance": 105986,
+        "resolution": 1096435
+      }
     },
     {
       "name": "Gongju Winter",
@@ -384,7 +573,21 @@
       "interrupts": 23,
       "downContr": 39225,
       "resurrects": 9,
-      "profileKey": "Luminary|Gongju Winter"
+      "profileKey": "Luminary|Gongju Winter",
+      "boonGen": {
+        "might": 11394117,
+        "fury": 610091,
+        "quickness": 279569,
+        "alacrity": 15487,
+        "protection": 1306917,
+        "regeneration": 422229,
+        "vigor": 48042,
+        "aegis": 645571,
+        "stability": 7019485,
+        "swiftness": 2905725,
+        "resistance": 249089,
+        "resolution": 1306125
+      }
     },
     {
       "name": "Aiilya",
@@ -401,7 +604,13 @@
       "interrupts": 1,
       "downContr": 22692,
       "resurrects": 0,
-      "profileKey": "Soulbeast|Aiilya"
+      "profileKey": "Soulbeast|Aiilya",
+      "boonGen": {
+        "might": 365088,
+        "fury": 33131,
+        "regeneration": 13391,
+        "swiftness": 0
+      }
     },
     {
       "name": "Iabrat",
@@ -418,7 +627,8 @@
       "interrupts": 18,
       "downContr": 99356,
       "resurrects": 1,
-      "profileKey": "Reaper|Iabrat"
+      "profileKey": "Reaper|Iabrat",
+      "boonGen": {}
     },
     {
       "name": "Amelia Farofaln",
@@ -435,7 +645,8 @@
       "interrupts": 6,
       "downContr": 14352,
       "resurrects": 0,
-      "profileKey": "Reaper|Amelia Farofaln"
+      "profileKey": "Reaper|Amelia Farofaln",
+      "boonGen": {}
     },
     {
       "name": "Integra Nasuka",
@@ -452,7 +663,12 @@
       "interrupts": 4,
       "downContr": 16555,
       "resurrects": 5,
-      "profileKey": "Mechanist|Integra Nasuka"
+      "profileKey": "Mechanist|Integra Nasuka",
+      "boonGen": {
+        "might": 4022355,
+        "regeneration": 417630,
+        "swiftness": 21800
+      }
     },
     {
       "name": "Grandfortress",
@@ -469,7 +685,21 @@
       "interrupts": 1,
       "downContr": 21229,
       "resurrects": 3,
-      "profileKey": "Firebrand|Grandfortress"
+      "profileKey": "Firebrand|Grandfortress",
+      "boonGen": {
+        "might": 1699792,
+        "fury": 174493,
+        "quickness": 357917,
+        "alacrity": 2999,
+        "protection": 429913,
+        "regeneration": 11598,
+        "vigor": 9995,
+        "aegis": 308927,
+        "stability": 3284392,
+        "swiftness": 101848,
+        "resistance": 68330,
+        "resolution": 1168630
+      }
     },
     {
       "name": "Zagirrii",
@@ -486,7 +716,19 @@
       "interrupts": 1,
       "downContr": 5844,
       "resurrects": 0,
-      "profileKey": "Paragon|Zagirrii"
+      "profileKey": "Paragon|Zagirrii",
+      "boonGen": {
+        "might": 5203758,
+        "fury": 508039,
+        "quickness": 89151,
+        "protection": 16772,
+        "regeneration": 296838,
+        "vigor": 227949,
+        "stability": 581799,
+        "swiftness": 364550,
+        "resistance": 207778,
+        "resolution": 15995
+      }
     },
     {
       "name": "M\u00e9rkury",
@@ -503,7 +745,16 @@
       "interrupts": 0,
       "downContr": 13146,
       "resurrects": 2,
-      "profileKey": "Catalyst|M\u00e9rkury"
+      "profileKey": "Catalyst|M\u00e9rkury",
+      "boonGen": {
+        "might": 1880078,
+        "fury": 49469,
+        "protection": 32403,
+        "regeneration": 27007,
+        "vigor": 30605,
+        "swiftness": 77587,
+        "resolution": 26379
+      }
     },
     {
       "name": "Tuuki Tokisaki",
@@ -520,7 +771,11 @@
       "interrupts": 0,
       "downContr": 113900,
       "resurrects": 3,
-      "profileKey": "Untamed|Tuuki Tokisaki"
+      "profileKey": "Untamed|Tuuki Tokisaki",
+      "boonGen": {
+        "might": 1420965,
+        "regeneration": 23983
+      }
     },
     {
       "name": "Copper Twilight",
@@ -537,7 +792,18 @@
       "interrupts": 0,
       "downContr": 5107,
       "resurrects": 1,
-      "profileKey": "Firebrand|Copper Twilight"
+      "profileKey": "Firebrand|Copper Twilight",
+      "boonGen": {
+        "might": 1396304,
+        "fury": 104076,
+        "quickness": 120567,
+        "protection": 88577,
+        "regeneration": 23819,
+        "aegis": 129192,
+        "stability": 704429,
+        "resistance": 87091,
+        "resolution": 260850
+      }
     }
   ],
   "fights": [
