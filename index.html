@@ -220,7 +220,8 @@
     <div class="name" id="brandGuild">Guild</div>
   </div>
   <nav class="tabbar">
-    <div class="nav-item active" data-section="overview">Overview</div>
+    <div class="nav-item active" data-section="abilities">Ability Stats</div>
+    <div class="nav-item" data-section="overview">Overview</div>
     <div class="nav-item" data-section="offense">Offense</div>
     <div class="nav-item" data-section="support">Support</div>
     <div class="nav-item" data-section="control">Control</div>
@@ -235,7 +236,40 @@
     <div class="dispatch" id="dispatchLine">$ wvw-report --loading<span class="caret"></span></div>
 
     <!-- OVERVIEW -->
-    <section class="section active" id="sec-overview">
+    <!-- ABILITY STATS -->
+    <section class="section active" id="sec-abilities">
+      <h1>Ability Stats</h1>
+      <div class="subtitle">Block and miss (blind) rates per ability, at squad, profession, or individual player level.</div>
+      <div class="card">
+        <div style="display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;">
+          <div class="role-pill active" data-scope="squad">Whole Squad</div>
+          <div class="role-pill" data-scope="profession">By Profession</div>
+          <div class="role-pill" data-scope="player">By Player</div>
+        </div>
+        <div id="abilityScopeSelectWrap" style="display:none; margin-bottom:14px;">
+          <select id="abilityScopeSelect" class="search" style="max-width:260px;"></select>
+        </div>
+        <div class="table-scroll">
+          <table id="tableAbility">
+            <thead><tr>
+              <th data-key="skillName">Ability</th>
+              <th class="num" data-key="attempts">Attempts</th>
+              <th class="num" data-key="hits">Hits</th>
+              <th class="num" data-key="blocked">Blocked</th>
+              <th class="num" data-key="blockPct">Block %</th>
+              <th class="num" data-key="missed">Missed (Blind)</th>
+              <th class="num" data-key="missPct">Miss %</th>
+              <th class="num" data-key="evaded">Evaded</th>
+              <th class="num" data-key="invulned">Invulned</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="foot-note" style="margin-top:12px;">Only abilities used at least 20 times in the session are shown, to filter out noise. Ability names resolve live from the GW2 API.</div>
+      </div>
+    </section>
+
+    <section class="section" id="sec-overview">
       <h1>Session Overview</h1>
       <div class="subtitle" id="overviewSubtitle">Loading session data...</div>
 
@@ -539,6 +573,7 @@ function render(){
   renderCompositionLegend(s.composition);
   renderHighScores(DATA.highScores);
   renderPlayerList(DATA.players);
+  renderAbilityTable();
 
   buildTable('tableOffense', DATA.players, 'totalDmg', true);
   buildTable('tableSupport', DATA.players, 'healing', true);
@@ -893,6 +928,83 @@ document.querySelectorAll('.mode-pill').forEach(el => {
     document.querySelectorAll('.mode-pill').forEach(m => m.classList.toggle('active', m === el));
     document.getElementById('rolePlayerPicker').style.display = roleMode === 'custom' ? '' : 'none';
     renderRoleView(currentRole);
+  });
+});
+
+// ---------- Ability Stats ----------
+let abilityScope = 'squad';
+let abilitySort = { key: 'attempts', dir: -1 };
+
+function renderAbilityScopeOptions(){
+  const select = document.getElementById('abilityScopeSelect');
+  if (abilityScope === 'profession'){
+    const profs = Object.keys(DATA.abilityStats.byProfession).sort();
+    select.innerHTML = profs.map(p => `<option value="${p}">${p}</option>`).join('');
+  } else if (abilityScope === 'player'){
+    const players = [...DATA.players].sort((a,b) => a.name.localeCompare(b.name));
+    select.innerHTML = players.map(p => `<option value="${p.profileKey}">${p.name} (${p.prof})</option>`).join('');
+  }
+}
+
+async function renderAbilityTable(){
+  let rows;
+  if (abilityScope === 'squad'){
+    rows = DATA.abilityStats.squad;
+  } else if (abilityScope === 'profession'){
+    const prof = document.getElementById('abilityScopeSelect').value;
+    rows = DATA.abilityStats.byProfession[prof] || [];
+  } else {
+    const key = document.getElementById('abilityScopeSelect').value;
+    rows = DATA.abilityStats.byPlayer[key] || [];
+  }
+
+  const tbody = document.querySelector('#tableAbility tbody');
+  tbody.innerHTML = '<tr><td style="color:var(--muted); padding:12px;">Loading ability names...</td></tr>';
+
+  const ids = rows.map(r => r.skillId);
+  await resolveSkillNames(ids);
+
+  const withNames = rows.map(r => ({ ...r, skillName: skillNameCache[r.skillId] || `Skill #${r.skillId}` }));
+  withNames.sort((a,b) => {
+    const av = a[abilitySort.key], bv = b[abilitySort.key];
+    if (typeof av === 'string') return abilitySort.dir * av.localeCompare(bv);
+    return abilitySort.dir * (av - bv);
+  });
+
+  tbody.innerHTML = withNames.map(r => `<tr>
+    <td class="name-cell">${r.skillName}</td>
+    <td class="num">${fmt(r.attempts)}</td>
+    <td class="num">${fmt(r.hits)}</td>
+    <td class="num">${fmt(r.blocked)}</td>
+    <td class="num">${r.blockPct}%</td>
+    <td class="num">${fmt(r.missed)}</td>
+    <td class="num">${r.missPct}%</td>
+    <td class="num">${fmt(r.evaded)}</td>
+    <td class="num">${fmt(r.invulned)}</td>
+  </tr>`).join('');
+}
+
+function setAbilityScope(scope){
+  abilityScope = scope;
+  document.querySelectorAll('#sec-abilities .role-pill').forEach(el => {
+    el.classList.toggle('active', el.dataset.scope === scope);
+  });
+  const wrap = document.getElementById('abilityScopeSelectWrap');
+  wrap.style.display = scope === 'squad' ? 'none' : '';
+  if (scope !== 'squad') renderAbilityScopeOptions();
+  renderAbilityTable();
+}
+
+document.querySelectorAll('#sec-abilities .role-pill').forEach(el => {
+  el.addEventListener('click', () => setAbilityScope(el.dataset.scope));
+});
+document.getElementById('abilityScopeSelect').addEventListener('change', renderAbilityTable);
+document.querySelectorAll('#tableAbility th').forEach(th => {
+  th.addEventListener('click', () => {
+    const key = th.dataset.key;
+    abilitySort.dir = (abilitySort.key === key) ? -abilitySort.dir : -1;
+    abilitySort.key = key;
+    renderAbilityTable();
   });
 });
 
