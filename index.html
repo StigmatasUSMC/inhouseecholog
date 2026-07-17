@@ -179,6 +179,12 @@
   .mode-pill:hover{ color:var(--text); }
   .mode-pill.active{ background:var(--green); color:var(--void); border-color:var(--green); font-weight:600; }
 
+  .reveal-link{
+    color:var(--gold); font-family:var(--mono); font-size:12.5px;
+    cursor:pointer; text-decoration:underline; text-underline-offset:3px;
+  }
+  .reveal-link:hover{ color:var(--text); }
+
   .check-item{
     display:flex; align-items:center; gap:6px; font-family:var(--mono); font-size:12px;
     background:var(--panel-2); border:1px solid var(--border); border-radius:4px;
@@ -266,7 +272,11 @@
             <tbody></tbody>
           </table>
         </div>
-        <div class="foot-note" style="margin-top:12px;">Only abilities used at least 20 times in the session are shown, to filter out noise. Ability names resolve live from the GW2 API.</div>
+        <div style="margin-top:12px;">
+          <span class="reveal-link" id="abilityUnresolvedToggle">Show unresolved →</span>
+        </div>
+        <div id="abilityUnresolvedList" style="display:none; margin-top:10px;"></div>
+        <div class="foot-note" style="margin-top:12px;">Only abilities used at least 20 times in the session are shown, to filter out noise. Ability names resolve from Elite Insights' own data first, then GW2's live API.</div>
       </div>
     </section>
 
@@ -758,6 +768,17 @@ const CONFIRMED_BUFF_NAMES = {
 Object.entries(CONFIRMED_BUFF_NAMES).forEach(([id, name]) => { skillNameCache[id] = name; });
 
 async function resolveSkillNames(ids){
+  // Elite Insights' own combined data has better coverage than GW2's public API for
+  // sigil procs, conditions, and other non-player-cast skill IDs (verified: covers
+  // Burning, Chilled, Crippled, and proc names the public API has no entry for at all).
+  const localSkills = (DATA && DATA.localSkillNames) || {};
+  ids.forEach(id => {
+    if (!(id in skillNameCache) && localSkills[id]) {
+      skillNameCache[id] = localSkills[id].name;
+      skillIconCache[id] = localSkills[id].icon || null;
+    }
+  });
+
   const toFetch = ids.filter(id => !(id in skillNameCache) && Number(id) > 0);
   if (toFetch.length === 0) return;
 
@@ -1007,15 +1028,22 @@ async function renderAegisStats(){
       <td class="num">${d.aegisUptimePct}%</td>
     </tr>`).join('');
 
-  const topAbilities = Object.entries(aegis.byAbility).slice(0, 20);
-  const abilityIds = topAbilities.map(([id]) => id);
-  await resolveSkillNames(abilityIds);
-  const abilityRows = topAbilities
-    .map(([id, count]) => {
-      const name = skillNameCache[id] || `Skill #${id}`;
-      return `<tr><td class="name-cell">${skillIconHtml(id, 22)}${name}</td><td class="num">${fmt(count)}</td></tr>`;
-    })
-    .join('');
+  const allAbilities = Object.entries(aegis.byAbility);
+  const allAbilityIds = allAbilities.map(([id]) => id);
+  await resolveSkillNames(allAbilityIds);
+
+  const rowHtml = ([id, count]) => {
+    const name = skillNameCache[id] || `Skill #${id}`;
+    return `<tr><td class="name-cell">${skillIconHtml(id, 22)}${name}</td><td class="num">${fmt(count)}</td></tr>`;
+  };
+
+  const topAbilities = allAbilities.slice(0, 20);
+  const abilityRows = topAbilities.map(rowHtml).join('');
+  const fullAbilityRows = allAbilities.map(rowHtml).join('');
+  const unresolved = allAbilities.filter(([id]) => !skillNameCache[id]);
+
+  const topSum = topAbilities.reduce((sum,[,c]) => sum + c, 0);
+  const totalSum = allAbilities.reduce((sum,[,c]) => sum + c, 0);
 
   container.innerHTML = `
     <div class="card">
@@ -1036,15 +1064,41 @@ async function renderAegisStats(){
     </div>
     <div class="card">
       <h2>Top Abilities Blocked by Aegis</h2>
+      <div class="subtitle" style="margin-bottom:10px;">Showing top 20 of ${allAbilities.length} distinct abilities (${fmt(topSum)} of ${fmt(totalSum)} total aegis blocks).</div>
       <div class="table-scroll">
         <table>
           <thead><tr><th>Enemy Ability</th><th class="num">Times Blocked</th></tr></thead>
           <tbody>${abilityRows}</tbody>
         </table>
       </div>
+      <div style="margin-top:12px; display:flex; gap:16px;">
+        <span class="reveal-link" data-target="aegisFullAbilityList">Show all ${allAbilities.length} abilities →</span>
+        <span class="reveal-link" data-target="aegisUnresolvedList">Show ${unresolved.length} unresolved →</span>
+      </div>
+      <div id="aegisFullAbilityList" style="display:none; margin-top:14px;">
+        <div class="table-scroll" style="max-height:500px; overflow-y:auto;">
+          <table>
+            <thead><tr><th>Enemy Ability</th><th class="num">Times Blocked</th></tr></thead>
+            <tbody>${fullAbilityRows}</tbody>
+          </table>
+        </div>
+      </div>
+      <div id="aegisUnresolvedList" style="display:none; margin-top:14px;">
+        <p class="foot-note" style="margin-bottom:8px;">These IDs have no name anywhere, not in GW2's public API, not in Elite Insights' own data. Genuinely unresolvable, not a bug.</p>
+        <div style="font-family:var(--mono); font-size:12px; display:grid; grid-template-columns:repeat(auto-fill,minmax(100px,1fr)); gap:4px;">
+          ${unresolved.map(([id,count]) => `<span>#${id} (${count})</span>`).join('')}
+        </div>
+      </div>
     </div>
     <div class="foot-note">Computed directly from the raw combat log (not Elite Insights' processed output), correlating each block event's exact timestamp against Aegis's on/off windows for that player. Validated against Elite Insights' own block/miss counts, exact match on real test data.</div>
   `;
+
+  container.querySelectorAll('.reveal-link').forEach(el => {
+    el.addEventListener('click', () => {
+      const target = document.getElementById(el.dataset.target);
+      target.style.display = target.style.display === 'none' ? '' : 'none';
+    });
+  });
 }
 
 // ---------- Ability Stats ----------
@@ -1081,13 +1135,15 @@ async function renderAbilityTable(){
   await resolveSkillNames(ids);
 
   const withNames = rows.map(r => ({ ...r, skillName: skillNameCache[r.skillId] || `Skill #${r.skillId}` }));
-  withNames.sort((a,b) => {
+  const resolvedRows = withNames.filter(r => skillNameCache[r.skillId]);
+  const unresolvedRows = withNames.filter(r => !skillNameCache[r.skillId]);
+  resolvedRows.sort((a,b) => {
     const av = a[abilitySort.key], bv = b[abilitySort.key];
     if (typeof av === 'string') return abilitySort.dir * av.localeCompare(bv);
     return abilitySort.dir * (av - bv);
   });
 
-  tbody.innerHTML = withNames.map(r => `<tr>
+  tbody.innerHTML = resolvedRows.map(r => `<tr>
     <td class="name-cell">${skillIconHtml(r.skillId, 22)}${r.skillName}</td>
     <td class="num">${fmt(r.attempts)}</td>
     <td class="num">${fmt(r.hits)}</td>
@@ -1098,6 +1154,16 @@ async function renderAbilityTable(){
     <td class="num">${fmt(r.evaded)}</td>
     <td class="num">${fmt(r.invulned)}</td>
   </tr>`).join('');
+
+  const unresolvedPanel = document.getElementById('abilityUnresolvedList');
+  const unresolvedToggle = document.getElementById('abilityUnresolvedToggle');
+  unresolvedToggle.textContent = `Show ${unresolvedRows.length} unresolved →`;
+  unresolvedPanel.innerHTML = `
+    <p class="foot-note" style="margin-bottom:8px;">These IDs have no name anywhere, not in GW2's public API, not in Elite Insights' own data. Genuinely unresolvable, not a bug.</p>
+    <div style="font-family:var(--mono); font-size:12px; display:grid; grid-template-columns:repeat(auto-fill,minmax(100px,1fr)); gap:4px;">
+      ${unresolvedRows.map(r => `<span>#${r.skillId} (${fmt(r.attempts)})</span>`).join('')}
+    </div>
+  `;
 }
 
 function setAbilityScope(scope){
@@ -1115,6 +1181,10 @@ document.querySelectorAll('#sec-abilities .role-pill').forEach(el => {
   el.addEventListener('click', () => setAbilityScope(el.dataset.scope));
 });
 document.getElementById('abilityScopeSelect').addEventListener('change', renderAbilityTable);
+document.getElementById('abilityUnresolvedToggle').addEventListener('click', () => {
+  const panel = document.getElementById('abilityUnresolvedList');
+  panel.style.display = panel.style.display === 'none' ? '' : 'none';
+});
 document.querySelectorAll('#tableAbility th').forEach(th => {
   th.addEventListener('click', () => {
     const key = th.dataset.key;
