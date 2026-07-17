@@ -7,9 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
 <style>
   :root{
     --void:#11151b;
@@ -225,7 +222,6 @@
   <nav class="tabbar">
     <div class="nav-item active" data-section="abilities">Ability Stats</div>
     <div class="nav-item" data-section="aegis">Aegis Stats</div>
-    <div class="nav-item" data-section="source">Source Code</div>
     <div class="nav-item" data-section="overview">Overview</div>
     <div class="nav-item" data-section="offense">Offense</div>
     <div class="nav-item" data-section="support">Support</div>
@@ -279,15 +275,6 @@
       <h1>Aegis Stats</h1>
       <div class="subtitle" id="aegisSubtitle">How much of the squad's blocking is specifically from Aegis, computed directly from the raw combat log.</div>
       <div id="aegisContent"></div>
-    </section>
-
-    <!-- SOURCE CODE -->
-    <section class="section" id="sec-source">
-      <h1>Source Code</h1>
-      <div class="subtitle">The actual script that computes the Aegis Stats above, fetched live from this repo, not a copy.</div>
-      <div class="card">
-        <pre style="margin:0; max-height:800px; overflow:auto; background:transparent;"><code id="sourceCodeBlock" class="language-python">Loading aegis_analysis.py...</code></pre>
-      </div>
     </section>
 
     <section class="section" id="sec-overview">
@@ -748,33 +735,27 @@ const lazyChartInit = {
   control: () => buildBarChart('chartCcFull', DATA.players, 'cc', DATA.players.length, COLORS.gold, true),
   classes: () => buildDonut('chartCompositionFull', DATA.summary.composition, 380),
   roles: () => { renderRolePlayerChecklist(); updateRoleSelectionCount(); renderRoleView('healer'); },
-  source: () => loadSourceCode(),
 };
 const initedSections = new Set();
-
-async function loadSourceCode(){
-  const block = document.getElementById('sourceCodeBlock');
-  let text;
-  try {
-    const res = await fetch('aegis_analysis.py');
-    if (!res.ok) throw new Error('not found');
-    text = await res.text();
-  } catch (e) {
-    block.textContent = 'Could not load aegis_analysis.py. Make sure it has been pushed to this repo alongside index.html and data.json.';
-    return;
-  }
-  block.textContent = text;
-  try {
-    hljs.highlightElement(block);
-  } catch (e) {
-    // Syntax highlighting is a nice-to-have; the raw code above is already showing either way.
-  }
-}
 
 // ---------- Player Profiles ----------
 const skillNameCache = {};
 const skillIconCache = {};
 const GW2_API_BATCH_LIMIT = 150; // GW2's documented limit is 200 ids per request; we stay under it for safety.
+
+// Boon/condition IDs confirmed either directly from arcdps's own published documentation
+// (evtc format spec, CBTS_BUFFFORMULA skill_mask list) or from our own verified testing
+// earlier in this session. These are buff/condition definitions, not player-cast skills,
+// so GW2's public /v2/skills endpoint doesn't have entries for them at all, no amount of
+// API querying will ever resolve these; only a hardcoded table works here.
+const CONFIRMED_BUFF_NAMES = {
+  718: "Regeneration", 719: "Swiftness", 723: "Poison", 725: "Fury",
+  726: "Vigor", 738: "Vulnerability", 742: "Weakness", 861: "Confusion",
+  873: "Resolution", 19426: "Torment", 740: "Might", 1187: "Quickness",
+  30328: "Alacrity", 717: "Protection", 736: "Bleeding", 42883: "Kalla's Fervor",
+  743: "Aegis", 1122: "Stability", 26980: "Resistance", 720: "Blind",
+};
+Object.entries(CONFIRMED_BUFF_NAMES).forEach(([id, name]) => { skillNameCache[id] = name; });
 
 async function resolveSkillNames(ids){
   const toFetch = ids.filter(id => !(id in skillNameCache) && Number(id) > 0);
