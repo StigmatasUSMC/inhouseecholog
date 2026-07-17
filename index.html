@@ -773,6 +773,7 @@ async function loadSourceCode(){
 
 // ---------- Player Profiles ----------
 const skillNameCache = {};
+const skillIconCache = {};
 
 async function resolveSkillNames(ids){
   const toFetch = ids.filter(id => !(id in skillNameCache) && Number(id) > 0);
@@ -781,11 +782,17 @@ async function resolveSkillNames(ids){
     const res = await fetch(`https://api.guildwars2.com/v2/skills?ids=${toFetch.join(',')}`);
     if (!res.ok) throw new Error('bad response');
     const data = await res.json();
-    data.forEach(s => { skillNameCache[s.id] = s.name; });
+    data.forEach(s => { skillNameCache[s.id] = s.name; skillIconCache[s.id] = s.icon || null; });
   }catch(e){
     // API unreachable or ids invalid; fall back to raw IDs, no need to block rendering.
   }
   toFetch.forEach(id => { if (!(id in skillNameCache)) skillNameCache[id] = null; });
+}
+
+function skillIconHtml(id, size){
+  const icon = skillIconCache[id];
+  if (!icon) return '';
+  return `<img src="${icon}" width="${size}" height="${size}" style="border-radius:3px; vertical-align:middle; margin-right:6px;" onerror="this.style.display='none'">`;
 }
 
 function renderPlayerList(players){
@@ -836,7 +843,7 @@ async function selectPlayer(profileKey){
   await resolveSkillNames(skillIds);
   document.getElementById('profileSkills').innerHTML = profile.topSkills.map(s => {
     const name = skillNameCache[s.skillId] || `Skill #${s.skillId}`;
-    return `<div class="skill-row"><span class="skill-name">${name}</span><span class="skill-count">${s.count}</span></div>`;
+    return `<div class="skill-row"><span class="skill-name">${skillIconHtml(s.skillId, 20)}${name}</span><span class="skill-count">${s.count}</span></div>`;
   }).join('');
 
   const tbody = document.querySelector('#tableProfileFights tbody');
@@ -974,7 +981,7 @@ document.querySelectorAll('.mode-pill').forEach(el => {
 });
 
 // ---------- Aegis Stats ----------
-function renderAegisStats(){
+async function renderAegisStats(){
   const container = document.getElementById('aegisContent');
   const aegis = DATA.aegisStats;
 
@@ -1008,9 +1015,14 @@ function renderAegisStats(){
       <td class="num">${d.aegisUptimePct}%</td>
     </tr>`).join('');
 
-  const abilityRows = Object.entries(aegis.byAbility)
-    .slice(0, 20)
-    .map(([skill, count]) => `<tr><td class="name-cell">${skill}</td><td class="num">${fmt(count)}</td></tr>`)
+  const topAbilities = Object.entries(aegis.byAbility).slice(0, 20);
+  const abilityIds = topAbilities.map(([id]) => id);
+  await resolveSkillNames(abilityIds);
+  const abilityRows = topAbilities
+    .map(([id, count]) => {
+      const name = skillNameCache[id] || `Skill #${id}`;
+      return `<tr><td class="name-cell">${skillIconHtml(id, 22)}${name}</td><td class="num">${fmt(count)}</td></tr>`;
+    })
     .join('');
 
   container.innerHTML = `
@@ -1084,7 +1096,7 @@ async function renderAbilityTable(){
   });
 
   tbody.innerHTML = withNames.map(r => `<tr>
-    <td class="name-cell">${r.skillName}</td>
+    <td class="name-cell">${skillIconHtml(r.skillId, 22)}${r.skillName}</td>
     <td class="num">${fmt(r.attempts)}</td>
     <td class="num">${fmt(r.hits)}</td>
     <td class="num">${fmt(r.blocked)}</td>
