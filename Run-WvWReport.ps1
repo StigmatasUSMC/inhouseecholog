@@ -21,6 +21,7 @@ $EIExe        = "C:\Users\newpc\Desktop\echologs\GW2-Elite-Insights-Parser-maste
 $TopStatsExe  = "C:\Users\newpc\Desktop\echologs\TopStats_v1.7.5\TopStats.exe"
 $TopStatsIni  = "C:\Users\newpc\Desktop\echologs\TopStats_v1.7.5\top_stats_config.ini"
 $PythonScript = "C:\Users\newpc\Desktop\echologs\build_report_data.py"
+$AegisScript  = "C:\Users\newpc\Desktop\echologs\aegis_analysis.py"
 $RepoFolder   = "C:\Users\newpc\Desktop\echologs\inhouseecholog"
 $ArchiveFolder = "C:\Users\newpc\Desktop\echologs\archived_fights_json"
 $TokenFile    = Join-Path $RepoFolder "dps-report-token.txt"
@@ -51,7 +52,7 @@ if (Test-Path $JsonOutput) {
 New-Item -ItemType Directory -Force -Path $JsonOutput | Out-Null
 
 # ---------- Step 1: Parse zevtc -> JSON with Elite Insights ----------
-Write-Host "`n[1/3] Parsing zevtc logs with Elite Insights..." -ForegroundColor Cyan
+Write-Host "`n[1/4] Parsing zevtc logs with Elite Insights..." -ForegroundColor Cyan
 
 $TempConf = Join-Path $env:TEMP "wvw_session_json_temp.conf"
 @"
@@ -119,7 +120,7 @@ Write-Host "Captured $($linksMap.Count) dps.report links -> $linksMapPath" -Fore
 Write-Host "Parsing complete. JSON files written to $JsonOutput" -ForegroundColor Green
 
 # ---------- Step 2: Combine JSON into one session ----------
-Write-Host "`n[2/3] Combining logs into one session summary..." -ForegroundColor Cyan
+Write-Host "`n[2/4] Combining logs into one session summary..." -ForegroundColor Cyan
 
 # Point the combiner's config at this session's JSON folder
 (Get-Content $TopStatsIni) |
@@ -155,13 +156,26 @@ $archivePath = Join-Path $ArchiveFolder $combinedJson.Name
 Copy-Item -Path $combinedJson.FullName -Destination $archivePath -Force
 Write-Host "Archived combined session to: $archivePath" -ForegroundColor Green
 
-# ---------- Step 3: Generate data.json for the web dashboard ----------
-Write-Host "`n[3/3] Generating data.json..." -ForegroundColor Cyan
+# ---------- Step 3: Aegis/blind block analysis from the raw zevtc files ----------
+Write-Host "`n[3/4] Analyzing Aegis blocks and blinds from raw combat data..." -ForegroundColor Cyan
+
+$aegisOutputPath = Join-Path $LogFolder "aegis_stats.json"
+python $AegisScript "$LogFolder" "$aegisOutputPath"
+
+if (Test-Path $aegisOutputPath) {
+    Write-Host "Aegis analysis written to: $aegisOutputPath" -ForegroundColor Green
+} else {
+    Write-Host "Aegis analysis did not produce output, continuing without it." -ForegroundColor Yellow
+    $aegisOutputPath = $null
+}
+
+# ---------- Step 4: Generate data.json for the web dashboard ----------
+Write-Host "`n[4/4] Generating data.json..." -ForegroundColor Cyan
 
 $dateStamp = Get-Date -Format "yyyy-MM-dd"
 $dataPath = Join-Path $RepoFolder "data.json"
 
-python $PythonScript $combinedJson.FullName $dataPath "$GuildName" "$dateStamp" "$linksMapPath"
+python $PythonScript $combinedJson.FullName $dataPath "$GuildName" "$dateStamp" "$linksMapPath" "$aegisOutputPath"
 
 if (Test-Path $dataPath) {
     Write-Host "`nDone! data.json written to:" -ForegroundColor Green
