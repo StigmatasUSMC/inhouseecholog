@@ -1,0 +1,234 @@
+"""
+aegis_analysis.py
+
+Analyzes raw .zevtc/.evtc files directly (bypassing Elite Insights) to compute
+Aegis-attributable blocks, non-Aegis blocks, blind counts, and Aegis uptime %,
+broken down by squad, profession, and ability (what got blocked).
+
+This exists because Elite Insights' processed JSON output does not carry
+individual timestamped block/buff events, only pre-aggregated totals. The raw
+EVTC event stream does have per-event timestamps, which this script uses to
+correlate "was Aegis active at the moment of this block" directly.
+
+Usage:
+    python aegis_analysis.py <folder_of_zevtc_files> <output_json_path>
+
+Requires parser.py, cbtstatechange.py, gw2_data.py (from Drevarr/EVTC_parser)
+to be in the same directory or on the Python path.
+"""
+
+import sys
+import os
+import glob
+import zipfile
+import tempfile
+import json
+from collections import defaultdict
+
+from parser import parse_evtc
+from gw2_data import elites, profs
+
+AEGIS_ID = 743
+RESULT_BLOCK = 3
+RESULT_BLIND = 7
+BUFF_APPLY_STATECHANGE = 69
+NON_PLAYER_ELITE = 4294967295
+IFF_FOE = 1  # Only count blocks/blinds from actual enemy attacks (iff==1), not
+             # friendly-buff-tagged pseudo-events that share the same result code.
+             # Verified against Elite Insights' own defenses.blockedCount/missedCount:
+             # filtering to iff==1 matches EI's counts exactly on real test data.
+
+
+def resolve_profession(agent):
+    if agent.is_elite in elites:
+        return elites[agent.is_elite]
+    return profs.get(agent.profession, "Unknown")
+
+
+def get_players(agents):
+    """Real players only: have the name\\x00account\\x00subgroup pattern and a valid profession."""
+    players = {}
+    for a in agents:
+        if "\x00" in a.name and a.is_elite != NON_PLAYER_ELITE and a.profession in profs:
+            display_name = a.name.split("\x00")[0]
+            players[a.address] = {
+                "name": display_name,
+                "profession": resolve_profession(a),
+            }
+    return players
+
+
+def reconstruct_aegis_intervals(events, player_addr):
+    """Build a list of (start, end) ms intervals when Aegis was active on this player."""
+    aegis_events = sorted(
+        [e for e in events if e.dst_agent == player_addr and e.skill_id == AEGIS_ID and e.buff == 1],
+        key=lambda e: e.time,
+    )
+    intervals = []
+    active_since = None
+    for e in aegis_events:
+        if e.is_buffremove == 0 and e.is_statechange == BUFF_APPLY_STATECHANGE:
+            if active_since is None:
+                active_since = e.time
+        elif e.is_buffremove != 0:
+            if active_since is not None:
+                intervals.append((active_since, e.time))
+                active_since = None
+    return intervals
+
+
+NON_TIMESTAMP_STATECHANGES = {31, 32}  # BUFF_FORMULA, SKILL_INFO: these repurpose the
+                                          # event struct's fields for metadata, not real
+                                          # timestamped gameplay events.
+
+
+def analyze_file(file_path):
+    """Analyze one raw evtc file (already extracted from its zip wrapper). Returns per-player rows."""
+    header, agents, skills, events = parse_evtc(file_path)
+    players = get_players(agents)
+
+    real_events = [e for e in events if e.is_statechange not in NON_TIMESTAMP_STATECHANGES and e.time != 0]
+    if not real_events:
+        return [], 0
+
+    fight_start = min(e.time for e in real_events)
+    fight_end = max(e.time for e in real_events)
+    fight_duration_ms = max(fight_end - fight_start, 1)
+
+    rows = []
+    for addr, pdata in players.items():
+        intervals = reconstruct_aegis_intervals(real_events, addr)
+        aegis_uptime_ms = sum(end - start for start, end in intervals)
+
+        def aegis_active_at(t):
+            return any(start <= t <= end for start, end in intervals)
+
+        block_events = [e for e in real_events if e.dst_agent == addr and e.result == RESULT_BLOCK
+                        and e.iff == IFF_FOE and e.buff == 0]
+        blind_events = [e for e in real_events if e.dst_agent == addr and e.result == RESULT_BLIND
+                        and e.iff == IFF_FOE and e.buff == 0]
+
+        aegis_blocks = 0
+        other_blocks = 0
+        aegis_blocked_skills = defaultdict(int)
+        for e in block_events:
+            if aegis_active_at(e.time):
+                aegis_blocks += 1
+                aegis_blocked_skills[str(e.skill_id)] += 1
+            else:
+                other_blocks += 1
+
+        rows.append({
+            "name": pdata["name"],
+            "profession": pdata["profession"],
+            "totalBlocks": len(block_events),
+            "aegisBlocks": aegis_blocks,
+            "otherBlocks": other_blocks,
+            "blinds": len(blind_events),
+            "aegisUptimeMs": aegis_uptime_ms,
+            "aegisBlockedSkills": dict(aegis_blocked_skills),
+        })
+
+    return rows, fight_duration_ms
+
+
+def extract_evtc(zevtc_path, tmp_dir):
+    """zevtc files are just zip-wrapped evtc files. Extract and return the inner file path."""
+    with zipfile.ZipFile(zevtc_path, "r") as z:
+        names = z.namelist()
+        if not names:
+            return None
+        inner_name = names[0]
+        z.extract(inner_name, tmp_dir)
+        return os.path.join(tmp_dir, inner_name)
+
+
+def main():
+    if len(sys.argv) < 3:
+        print("Usage: python aegis_analysis.py <folder_of_zevtc_files> <output_json_path>")
+        sys.exit(1)
+
+    folder = sys.argv[1]
+    out_path = sys.argv[2]
+
+    zevtc_files = sorted(glob.glob(os.path.join(folder, "*.zevtc")))
+    if not zevtc_files:
+        print(f"No .zevtc files found in {folder}")
+        sys.exit(1)
+
+    squad_totals = {"totalBlocks": 0, "aegisBlocks": 0, "otherBlocks": 0, "blinds": 0,
+                     "aegisUptimeMs": 0, "activeTimeMs": 0}
+    by_profession = defaultdict(lambda: {"totalBlocks": 0, "aegisBlocks": 0, "otherBlocks": 0,
+                                          "blinds": 0, "aegisUptimeMs": 0, "activeTimeMs": 0})
+    by_ability = defaultdict(int)
+    per_fight = []
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        for i, zevtc_path in enumerate(zevtc_files):
+            fname = os.path.basename(zevtc_path)
+            try:
+                evtc_path = extract_evtc(zevtc_path, tmp_dir)
+                if not evtc_path:
+                    print(f"  [{i+1}/{len(zevtc_files)}] {fname}: empty zip, skipping")
+                    continue
+                rows, fight_duration_ms = analyze_file(evtc_path)
+                os.remove(evtc_path)
+            except Exception as ex:
+                print(f"  [{i+1}/{len(zevtc_files)}] {fname}: FAILED ({ex})")
+                continue
+
+            fight_summary = {"file": fname, "durationMs": fight_duration_ms,
+                              "totalBlocks": 0, "aegisBlocks": 0}
+
+            for row in rows:
+                squad_totals["totalBlocks"] += row["totalBlocks"]
+                squad_totals["aegisBlocks"] += row["aegisBlocks"]
+                squad_totals["otherBlocks"] += row["otherBlocks"]
+                squad_totals["blinds"] += row["blinds"]
+                squad_totals["aegisUptimeMs"] += row["aegisUptimeMs"]
+                squad_totals["activeTimeMs"] += fight_duration_ms
+
+                prof = row["profession"]
+                by_profession[prof]["totalBlocks"] += row["totalBlocks"]
+                by_profession[prof]["aegisBlocks"] += row["aegisBlocks"]
+                by_profession[prof]["otherBlocks"] += row["otherBlocks"]
+                by_profession[prof]["blinds"] += row["blinds"]
+                by_profession[prof]["aegisUptimeMs"] += row["aegisUptimeMs"]
+                by_profession[prof]["activeTimeMs"] += fight_duration_ms
+
+                for skill_id, count in row["aegisBlockedSkills"].items():
+                    by_ability[skill_id] += count
+
+                fight_summary["totalBlocks"] += row["totalBlocks"]
+                fight_summary["aegisBlocks"] += row["aegisBlocks"]
+
+            per_fight.append(fight_summary)
+            print(f"  [{i+1}/{len(zevtc_files)}] {fname}: "
+                  f"{fight_summary['aegisBlocks']}/{fight_summary['totalBlocks']} aegis blocks")
+
+    def pct(uptime_ms, active_ms):
+        return round(uptime_ms / active_ms * 100, 1) if active_ms else 0
+
+    result = {
+        "squad": {
+            **squad_totals,
+            "aegisUptimePct": pct(squad_totals["aegisUptimeMs"], squad_totals["activeTimeMs"]),
+        },
+        "byProfession": {
+            prof: {**data, "aegisUptimePct": pct(data["aegisUptimeMs"], data["activeTimeMs"])}
+            for prof, data in by_profession.items()
+        },
+        "byAbility": dict(sorted(by_ability.items(), key=lambda kv: -kv[1])),
+        "perFight": per_fight,
+    }
+
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump(result, f, indent=2)
+
+    print(f"\nWrote {out_path}")
+    print(f"Squad: {squad_totals['aegisBlocks']}/{squad_totals['totalBlocks']} blocks attributed to Aegis "
+          f"({result['squad']['aegisUptimePct']}% avg uptime)")
+
+
+if __name__ == "__main__":
+    main()
