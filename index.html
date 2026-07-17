@@ -1,236 +1,1141 @@
-"""
-aegis_analysis.py
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>WvW Session Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<style>
+  :root{
+    --void:#11151b;
+    --panel:#171c24;
+    --panel-2:#1d232d;
+    --border:#2a323e;
+    --text:#e7ebf1;
+    --muted:#8b96a8;
+    --gold:#c9a24a;
+    --gold-dim:#8a742f;
+    --red:#b3452f;
+    --green:#4f8062;
+    --mono:'IBM Plex Mono', monospace;
+    --sans:'IBM Plex Sans', sans-serif;
+    --display:'Oswald', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--void); color:var(--text);
+    font-family:var(--sans); font-size:14px; line-height:1.5;
+  }
+  a{color:var(--gold);}
 
-Analyzes raw .zevtc/.evtc files directly (bypassing Elite Insights) to compute
-Aegis-attributable blocks, non-Aegis blocks, blind counts, and Aegis uptime %,
-broken down by squad, profession, and ability (what got blocked).
+  /* ---------- Layout ---------- */
+  .app{ display:flex; flex-direction:column; min-height:100vh; }
+  .topbar{
+    background:var(--panel); border-bottom:1px solid var(--border);
+    padding:14px 24px; display:flex; align-items:baseline; gap:12px;
+  }
+  .topbar .tag{
+    font-family:var(--mono); font-size:11px; color:var(--gold); letter-spacing:.08em;
+  }
+  .topbar .name{
+    font-family:var(--display); font-size:18px; font-weight:600; letter-spacing:.02em;
+  }
+  .tabbar{
+    display:flex; overflow-x:auto; background:var(--panel-2);
+    border-bottom:1px solid var(--border); position:sticky; top:0; z-index:10;
+    scrollbar-width:thin;
+  }
+  .nav-item{
+    display:flex; align-items:center; white-space:nowrap;
+    padding:11px 16px; color:var(--muted); cursor:pointer;
+    font-size:12.5px; font-weight:500; letter-spacing:.02em;
+    border-bottom:3px solid transparent;
+    transition:background .12s, color .12s;
+  }
+  .nav-item:hover{ background:var(--panel); color:var(--text); }
+  .nav-item.active{
+    background:var(--void); color:var(--gold); border-bottom-color:var(--gold);
+  }
+  .main{ flex:1; min-width:0; padding:28px 36px 60px; max-width:1240px; margin:0 auto; width:100%; }
 
-This exists because Elite Insights' processed JSON output does not carry
-individual timestamped block/buff events, only pre-aggregated totals. The raw
-EVTC event stream does have per-event timestamps, which this script uses to
-correlate "was Aegis active at the moment of this block" directly.
+  /* ---------- Header / dispatch line ---------- */
+  .dispatch{
+    font-family:var(--mono); font-size:12.5px; color:var(--green);
+    background:#0d1117; border:1px solid var(--border); border-radius:4px;
+    padding:10px 14px; margin-bottom:26px; overflow-x:auto; white-space:nowrap;
+  }
+  .dispatch .prompt{ color:var(--gold); }
+  .dispatch .caret{
+    display:inline-block; width:7px; height:14px; background:var(--green);
+    margin-left:4px; vertical-align:middle; animation:blink 1.1s steps(2) infinite;
+  }
+  @keyframes blink{ 50%{ opacity:0; } }
 
-Usage:
-    python aegis_analysis.py <folder_of_zevtc_files> <output_json_path>
+  h1{
+    font-family:var(--display); font-size:26px; font-weight:600; margin:0 0 4px;
+    letter-spacing:.01em;
+  }
+  .subtitle{ color:var(--muted); font-size:13px; margin-bottom:24px; }
 
-Requires parser.py, cbtstatechange.py, gw2_data.py (from Drevarr/EVTC_parser)
-to be in the same directory or on the Python path.
-"""
+  /* ---------- Cards ---------- */
+  .card{
+    background:var(--panel); border:1px solid var(--border); border-radius:6px;
+    padding:20px; margin-bottom:22px;
+  }
+  .card h2{
+    font-family:var(--display); font-size:16px; font-weight:600; letter-spacing:.03em;
+    text-transform:uppercase; color:var(--muted); margin:0 0 16px;
+  }
+  .stat-grid{
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(175px,1fr));
+    gap:14px; margin-bottom:6px;
+  }
+  .stat{
+    background:var(--panel-2); border:1px solid var(--border); border-left:3px solid var(--gold);
+    border-radius:4px; padding:14px 16px; overflow:hidden;
+  }
+  .stat.enemy{ border-left-color:var(--red); }
+  .stat .value{
+    font-family:var(--mono); font-weight:600; white-space:nowrap;
+    font-size:clamp(15px, 2.1vw, 24px);
+  }
+  .stat .label{
+    font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em;
+    margin-top:4px;
+  }
 
-import sys
-import os
-import glob
-import zipfile
-import tempfile
-import json
-from collections import defaultdict
+  .chart-wrap{ position:relative; height:340px; }
+  .chart-wrap.tall{ height:460px; }
+  .chart-wrap.roster{ height:900px; }
+  .two-col{ display:grid; grid-template-columns:1.4fr 1fr; gap:20px; }
+  @media (max-width:900px){ .two-col{ grid-template-columns:1fr; } }
 
-from parser import parse_evtc
-from gw2_data import elites, profs
+  /* ---------- Tables ---------- */
+  table{ width:100%; border-collapse:collapse; font-family:var(--mono); font-size:14px; }
+  th, td{ padding:9px 10px; border-bottom:1px solid var(--border); text-align:left; white-space:nowrap; }
+  td.name-cell{ font-size:15.5px; font-weight:600; color:var(--text); }
+  th{
+    color:var(--gold); font-weight:600; cursor:pointer; user-select:none;
+    text-transform:uppercase; font-size:11px; letter-spacing:.04em;
+    position:sticky; top:0; background:var(--panel);
+  }
+  th.num, td.num{ text-align:right; }
+  th .arrow{ opacity:.5; margin-left:4px; }
+  tr:nth-child(even) td{ background:rgba(255,255,255,0.015); }
+  tr:hover td{ background:rgba(201,162,74,0.06); }
+  .table-scroll{ overflow-x:auto; }
 
-AEGIS_ID = 743
-RESULT_BLOCK = 3
-RESULT_BLIND = 7
-BUFF_APPLY_STATECHANGE = 69
-NON_PLAYER_ELITE = 4294967295
-IFF_FOE = 1  # Only count blocks/blinds from actual enemy attacks (iff==1), not
-             # friendly-buff-tagged pseudo-events that share the same result code.
-             # Verified against Elite Insights' own defenses.blockedCount/missedCount:
-             # filtering to iff==1 matches EI's counts exactly on real test data.
+  .search{
+    width:100%; max-width:280px; padding:8px 10px; margin-bottom:14px;
+    background:var(--panel-2); border:1px solid var(--border); border-radius:4px;
+    color:var(--text); font-family:var(--mono); font-size:12.5px;
+  }
+  .search::placeholder{ color:var(--muted); }
 
+  .section{ display:none; }
+  .section.active{ display:block; }
 
-def resolve_profession(agent):
-    if agent.is_elite in elites:
-        return elites[agent.is_elite]
-    return profs.get(agent.profession, "Unknown")
+  .foot-note{ color:var(--muted); font-size:11.5px; margin-top:30px; font-family:var(--mono); }
 
+  /* ---------- High Scores ---------- */
+  .hs-grid{
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));
+    gap:16px;
+  }
+  .hs-group{ margin-bottom:26px; }
+  .hs-group:last-child{ margin-bottom:0; }
+  .hs-group-title{
+    font-family:var(--display); font-size:15px; font-weight:600; letter-spacing:.04em;
+    text-transform:uppercase; color:var(--text); margin:0 0 12px;
+    padding-bottom:6px; border-bottom:1px solid var(--border);
+  }
 
-def get_players(agents):
-    """Real players only: have the name\\x00account\\x00subgroup pattern and a valid profession."""
-    players = {}
-    for a in agents:
-        if "\x00" in a.name and a.is_elite != NON_PLAYER_ELITE and a.profession in profs:
-            display_name = a.name.split("\x00")[0]
-            players[a.address] = {
-                "name": display_name,
-                "profession": resolve_profession(a),
-            }
-    return players
+  /* ---------- Player Profile ---------- */
+  .player-pill{
+    font-family:var(--mono); font-size:12.5px; padding:6px 10px;
+    background:var(--panel-2); border:1px solid var(--border); border-radius:4px;
+    cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    transition:background .12s, border-color .12s;
+  }
+  .player-pill:hover{ border-color:var(--gold); }
+  .player-pill.active{ background:var(--gold); color:var(--void); border-color:var(--gold); font-weight:600; }
 
+  .role-pill{
+    font-family:var(--display); font-size:12.5px; font-weight:600; letter-spacing:.03em;
+    text-transform:uppercase; padding:8px 16px;
+    background:var(--panel-2); border:1px solid var(--border); border-radius:4px;
+    cursor:pointer; color:var(--muted);
+  }
+  .role-pill:hover{ color:var(--text); border-color:var(--gold); }
+  .role-pill.active{ background:var(--gold); color:var(--void); border-color:var(--gold); }
 
-def reconstruct_aegis_intervals(events, player_addr):
-    """Build a list of (start, end) ms intervals when Aegis was active on this player."""
-    aegis_events = sorted(
-        [e for e in events if e.dst_agent == player_addr and e.skill_id == AEGIS_ID and e.buff == 1],
-        key=lambda e: e.time,
-    )
-    intervals = []
-    active_since = None
-    for e in aegis_events:
-        if e.is_buffremove == 0 and e.is_statechange == BUFF_APPLY_STATECHANGE:
-            if active_since is None:
-                active_since = e.time
-        elif e.is_buffremove != 0:
-            if active_since is not None:
-                intervals.append((active_since, e.time))
-                active_since = None
-    return intervals
+  .mode-pill{
+    font-family:var(--mono); font-size:12px; padding:6px 14px;
+    background:var(--panel-2); border:1px solid var(--border); border-radius:20px;
+    cursor:pointer; color:var(--muted);
+  }
+  .mode-pill:hover{ color:var(--text); }
+  .mode-pill.active{ background:var(--green); color:var(--void); border-color:var(--green); font-weight:600; }
 
+  .check-item{
+    display:flex; align-items:center; gap:6px; font-family:var(--mono); font-size:12px;
+    background:var(--panel-2); border:1px solid var(--border); border-radius:4px;
+    padding:5px 8px; cursor:pointer; overflow:hidden;
+  }
+  .check-item:hover{ border-color:var(--gold); }
+  .check-item input{ flex-shrink:0; }
+  .check-item span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .skill-row{
+    display:flex; align-items:center; gap:8px; padding:4px 0;
+    border-bottom:1px solid rgba(255,255,255,0.04);
+  }
+  .skill-row .skill-name{ flex:1; }
+  .skill-row .skill-count{ color:var(--gold); font-weight:600; }
+  .hs-card{
+    background:var(--panel-2); border:1px solid var(--border); border-radius:6px;
+    padding:14px 16px;
+  }
+  .hs-card h3{
+    font-family:var(--display); font-size:12.5px; font-weight:600; letter-spacing:.02em;
+    color:var(--gold); margin:0 0 10px; text-transform:uppercase;
+  }
+  .hs-row{
+    display:flex; align-items:baseline;
+    font-family:var(--mono); font-size:12px; padding:3px 0;
+    border-bottom:1px solid rgba(255,255,255,0.04);
+  }
+  .hs-row:last-child{ border-bottom:none; }
+  .hs-row .hs-rank{ color:var(--muted); width:16px; flex-shrink:0; }
+  .hs-row .hs-name{ width:150px; flex-shrink:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding-right:10px; }
+  .hs-row .hs-value{ color:var(--text); font-weight:600; text-align:left; }
+</style>
+</head>
+<body>
 
-NON_TIMESTAMP_STATECHANGES = {31, 32}  # BUFF_FORMULA, SKILL_INFO: these repurpose the
-                                          # event struct's fields for metadata, not real
-                                          # timestamped gameplay events.
+<div class="app">
+  <div class="topbar">
+    <div class="tag">WVW REPORT</div>
+    <div class="name" id="brandGuild">Guild</div>
+  </div>
+  <nav class="tabbar">
+    <div class="nav-item active" data-section="abilities">Ability Stats</div>
+    <div class="nav-item" data-section="aegis">Aegis Stats</div>
+    <div class="nav-item" data-section="source">Source Code</div>
+    <div class="nav-item" data-section="overview">Overview</div>
+    <div class="nav-item" data-section="offense">Offense</div>
+    <div class="nav-item" data-section="support">Support</div>
+    <div class="nav-item" data-section="control">Control</div>
+    <div class="nav-item" data-section="classes">Classes</div>
+    <div class="nav-item" data-section="highscores">High Scores</div>
+    <div class="nav-item" data-section="players">Players</div>
+    <div class="nav-item" data-section="roles">Roles</div>
+    <div class="nav-item" data-section="fights">Fight Log</div>
+  </nav>
 
+  <main class="main">
+    <div class="dispatch" id="dispatchLine">$ wvw-report --loading<span class="caret"></span></div>
 
-def analyze_file(file_path):
-    """Analyze one raw evtc file (already extracted from its zip wrapper). Returns per-player rows."""
-    header, agents, skills, events = parse_evtc(file_path)
-    skill_names = {s.skill_id: s.name for s in skills}
-    players = get_players(agents)
+    <!-- OVERVIEW -->
+    <!-- ABILITY STATS -->
+    <section class="section active" id="sec-abilities">
+      <h1>Ability Stats</h1>
+      <div class="subtitle">Block and miss (blind) rates per ability, at squad, profession, or individual player level.</div>
+      <div class="card">
+        <div style="display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;">
+          <div class="role-pill active" data-scope="squad">Whole Squad</div>
+          <div class="role-pill" data-scope="profession">By Profession</div>
+          <div class="role-pill" data-scope="player">By Player</div>
+        </div>
+        <div id="abilityScopeSelectWrap" style="display:none; margin-bottom:14px;">
+          <select id="abilityScopeSelect" class="search" style="max-width:260px;"></select>
+        </div>
+        <div class="table-scroll">
+          <table id="tableAbility">
+            <thead><tr>
+              <th data-key="skillName">Ability</th>
+              <th class="num" data-key="attempts">Attempts</th>
+              <th class="num" data-key="hits">Hits</th>
+              <th class="num" data-key="blocked">Blocked</th>
+              <th class="num" data-key="blockPct">Block %</th>
+              <th class="num" data-key="missed">Missed (Blind)</th>
+              <th class="num" data-key="missPct">Miss %</th>
+              <th class="num" data-key="evaded">Evaded</th>
+              <th class="num" data-key="invulned">Invulned</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="foot-note" style="margin-top:12px;">Only abilities used at least 20 times in the session are shown, to filter out noise. Ability names resolve live from the GW2 API.</div>
+      </div>
+    </section>
 
-    real_events = [e for e in events if e.is_statechange not in NON_TIMESTAMP_STATECHANGES and e.time != 0]
-    if not real_events:
-        return [], 0
+    <!-- AEGIS STATS -->
+    <section class="section" id="sec-aegis">
+      <h1>Aegis Stats</h1>
+      <div class="subtitle" id="aegisSubtitle">How much of the squad's blocking is specifically from Aegis, computed directly from the raw combat log.</div>
+      <div id="aegisContent"></div>
+    </section>
 
-    fight_start = min(e.time for e in real_events)
-    fight_end = max(e.time for e in real_events)
-    fight_duration_ms = max(fight_end - fight_start, 1)
+    <!-- SOURCE CODE -->
+    <section class="section" id="sec-source">
+      <h1>Source Code</h1>
+      <div class="subtitle">The actual script that computes the Aegis Stats above, fetched live from this repo, not a copy.</div>
+      <div class="card">
+        <pre style="margin:0; max-height:800px; overflow:auto; background:transparent;"><code id="sourceCodeBlock" class="language-python">Loading aegis_analysis.py...</code></pre>
+      </div>
+    </section>
 
-    rows = []
-    for addr, pdata in players.items():
-        intervals = reconstruct_aegis_intervals(real_events, addr)
-        aegis_uptime_ms = sum(end - start for start, end in intervals)
+    <section class="section" id="sec-overview">
+      <h1>Session Overview</h1>
+      <div class="subtitle" id="overviewSubtitle">Loading session data...</div>
 
-        def aegis_active_at(t):
-            return any(start <= t <= end for start, end in intervals)
+      <div class="card">
+        <h2>Raid Outcome</h2>
+        <div class="stat-grid" id="statGrid"></div>
+        <div class="foot-note" id="raidOutcomeNote" style="margin-top:12px;"></div>
+      </div>
 
-        block_events = [e for e in real_events if e.dst_agent == addr and e.result == RESULT_BLOCK
-                        and e.iff == IFF_FOE and e.buff == 0]
-        blind_events = [e for e in real_events if e.dst_agent == addr and e.result == RESULT_BLIND
-                        and e.iff == IFF_FOE and e.buff == 0]
+      <div class="card">
+        <h2>Offensive Leaders — DPS</h2>
+        <div class="chart-wrap"><canvas id="chartDpsOverview"></canvas></div>
+      </div>
 
-        aegis_blocks = 0
-        other_blocks = 0
-        aegis_blocked_skills = defaultdict(int)
-        for e in block_events:
-            if aegis_active_at(e.time):
-                aegis_blocks += 1
-                skill_name = skill_names.get(e.skill_id, f"Skill #{e.skill_id}")
-                aegis_blocked_skills[skill_name] += 1
-            else:
-                other_blocks += 1
+      <div class="card">
+        <h2>Support Leaders — Healing</h2>
+        <div class="chart-wrap"><canvas id="chartHealOverview"></canvas></div>
+      </div>
 
-        rows.append({
-            "name": pdata["name"],
-            "profession": pdata["profession"],
-            "totalBlocks": len(block_events),
-            "aegisBlocks": aegis_blocks,
-            "otherBlocks": other_blocks,
-            "blinds": len(blind_events),
-            "aegisUptimeMs": aegis_uptime_ms,
-            "aegisBlockedSkills": dict(aegis_blocked_skills),
-        })
+      <div class="card">
+        <h2>Squad Composition</h2>
+        <div class="chart-wrap" style="max-width:420px; margin:0 auto;"><canvas id="chartComposition"></canvas></div>
+      </div>
+    </section>
 
-    return rows, fight_duration_ms
+    <!-- OFFENSE -->
+    <section class="section" id="sec-offense">
+      <h1>Offensive Stats</h1>
+      <div class="subtitle">Full roster, sortable. Click a column header to sort.</div>
+      <div class="card">
+        <div class="chart-wrap roster"><canvas id="chartDpsFull"></canvas></div>
+      </div>
+      <div class="card">
+        <input class="search" id="searchOffense" placeholder="Filter by player or profession...">
+        <div class="table-scroll">
+          <table id="tableOffense">
+            <thead><tr>
+              <th data-key="name">Player</th>
+              <th data-key="prof">Profession</th>
+              <th class="num" data-key="numFights">Fights</th>
+              <th class="num" data-key="dps">DPS</th>
+              <th class="num" data-key="totalDmg">Total Damage</th>
+              <th class="num" data-key="downContr">Down Contr.</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
 
+    <!-- SUPPORT -->
+    <section class="section" id="sec-support">
+      <h1>Support Stats</h1>
+      <div class="subtitle">Full roster, sortable. Click a column header to sort.</div>
+      <div class="card">
+        <div class="chart-wrap roster"><canvas id="chartHealFull"></canvas></div>
+      </div>
+      <div class="card">
+        <input class="search" id="searchSupport" placeholder="Filter by player or profession...">
+        <div class="table-scroll">
+          <table id="tableSupport">
+            <thead><tr>
+              <th data-key="name">Player</th>
+              <th data-key="prof">Profession</th>
+              <th class="num" data-key="numFights">Fights</th>
+              <th class="num" data-key="healing">Healing</th>
+              <th class="num" data-key="barrier">Barrier</th>
+              <th class="num" data-key="cleanse">Cleanses</th>
+              <th class="num" data-key="strips">Strips</th>
+              <th class="num" data-key="resurrects">Res.</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
 
-def extract_evtc(zevtc_path, tmp_dir):
-    """zevtc files are just zip-wrapped evtc files. Extract and return the inner file path."""
-    with zipfile.ZipFile(zevtc_path, "r") as z:
-        names = z.namelist()
-        if not names:
-            return None
-        inner_name = names[0]
-        z.extract(inner_name, tmp_dir)
-        return os.path.join(tmp_dir, inner_name)
+    <!-- CONTROL -->
+    <section class="section" id="sec-control">
+      <h1>Control Stats</h1>
+      <div class="subtitle">Full roster, sortable. Click a column header to sort.</div>
+      <div class="card">
+        <div class="chart-wrap roster"><canvas id="chartCcFull"></canvas></div>
+      </div>
+      <div class="card">
+        <input class="search" id="searchControl" placeholder="Filter by player or profession...">
+        <div class="table-scroll">
+          <table id="tableControl">
+            <thead><tr>
+              <th data-key="name">Player</th>
+              <th data-key="prof">Profession</th>
+              <th class="num" data-key="numFights">Fights</th>
+              <th class="num" data-key="cc">CC Applied</th>
+              <th class="num" data-key="interrupts">Interrupts</th>
+              <th class="num" data-key="strips">Boon Strips</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
 
+    <!-- CLASSES -->
+    <section class="section" id="sec-classes">
+      <h1>Squad Composition</h1>
+      <div class="subtitle">Profession breakdown for players who met the session activity threshold.</div>
+      <div class="card">
+        <div class="chart-wrap tall"><canvas id="chartCompositionFull"></canvas></div>
+        <div id="compositionLegend" style="margin-top:16px; font-family:var(--mono); font-size:12.5px; display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:6px;"></div>
+      </div>
+    </section>
 
-def main():
-    if len(sys.argv) < 3:
-        print("Usage: python aegis_analysis.py <folder_of_zevtc_files> <output_json_path>")
-        sys.exit(1)
+    <!-- HIGH SCORES -->
+    <section class="section" id="sec-highscores">
+      <h1>High Scores</h1>
+      <div class="subtitle">Best single-fight performances across the session, not session totals.</div>
+      <div class="card">
+        <div id="highScoresGrid"></div>
+      </div>
+    </section>
 
-    folder = sys.argv[1]
-    out_path = sys.argv[2]
+    <!-- PLAYERS -->
+    <section class="section" id="sec-players">
+      <h1>Player Profile</h1>
+      <div class="subtitle">Session totals for one player: APM, top skills used, and every fight they were in.</div>
+      <div class="card">
+        <input class="search" id="playerSearch" placeholder="Search player name..." style="max-width:320px; margin-bottom:14px;">
+        <div id="playerList" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:6px; max-height:220px; overflow-y:auto; margin-bottom:18px;"></div>
+      </div>
+      <div class="card" id="playerProfileCard" style="display:none;">
+        <h2 id="profileName">Player</h2>
+        <div class="stat-grid" id="profileStatGrid" style="margin-bottom:20px;"></div>
+        <div class="two-col">
+          <div>
+            <h2 style="margin-top:0;">Top Skills Used</h2>
+            <div id="profileSkills" style="font-family:var(--mono); font-size:13px;"></div>
+          </div>
+          <div>
+            <h2 style="margin-top:0;">Fights</h2>
+            <div class="table-scroll" style="max-height:400px; overflow-y:auto;">
+              <table id="tableProfileFights">
+                <thead><tr>
+                  <th data-key="id">#</th>
+                  <th data-key="date">Date</th>
+                  <th data-key="duration">Duration</th>
+                  <th class="num" data-key="squad">Squad</th>
+                  <th class="num" data-key="enemies">Enemies</th>
+                  <th>Report</th>
+                </tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
-    zevtc_files = sorted(glob.glob(os.path.join(folder, "*.zevtc")))
-    if not zevtc_files:
-        print(f"No .zevtc files found in {folder}")
-        sys.exit(1)
+    <!-- ROLES -->
+    <section class="section" id="sec-roles">
+      <h1>Role Comparison</h1>
+      <div class="subtitle">Compare players within the same role, or pick your own set of players to compare directly.</div>
+      <div class="card">
+        <div style="display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap;">
+          <div class="role-pill active" data-role="healer">Healers</div>
+          <div class="role-pill" data-role="dps">DPS</div>
+          <div class="role-pill" data-role="boon">Boon Support</div>
+        </div>
+        <div id="roleBoonSelectWrap" style="display:none; margin-bottom:14px;">
+          <select id="roleBoonSelect" class="search" style="max-width:220px;">
+            <option value="quickness">Quickness</option>
+            <option value="alacrity">Alacrity</option>
+            <option value="stability">Stability</option>
+            <option value="aegis">Aegis</option>
+            <option value="protection">Protection</option>
+            <option value="regeneration">Regeneration</option>
+            <option value="resistance">Resistance</option>
+            <option value="might">Might</option>
+            <option value="fury">Fury</option>
+            <option value="vigor">Vigor</option>
+            <option value="swiftness">Swiftness</option>
+            <option value="resolution">Resolution</option>
+          </select>
+        </div>
 
-    squad_totals = {"totalBlocks": 0, "aegisBlocks": 0, "otherBlocks": 0, "blinds": 0,
-                     "aegisUptimeMs": 0, "activeTimeMs": 0}
-    by_profession = defaultdict(lambda: {"totalBlocks": 0, "aegisBlocks": 0, "otherBlocks": 0,
-                                          "blinds": 0, "aegisUptimeMs": 0, "activeTimeMs": 0})
-    by_ability = defaultdict(int)
-    per_fight = []
+        <div style="display:flex; gap:8px; margin-bottom:14px;">
+          <div class="mode-pill active" data-mode="top12">Top 12</div>
+          <div class="mode-pill" data-mode="custom">Pick Players</div>
+        </div>
 
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        for i, zevtc_path in enumerate(zevtc_files):
-            fname = os.path.basename(zevtc_path)
-            try:
-                evtc_path = extract_evtc(zevtc_path, tmp_dir)
-                if not evtc_path:
-                    print(f"  [{i+1}/{len(zevtc_files)}] {fname}: empty zip, skipping")
-                    continue
-                rows, fight_duration_ms = analyze_file(evtc_path)
-                os.remove(evtc_path)
-            except Exception as ex:
-                print(f"  [{i+1}/{len(zevtc_files)}] {fname}: FAILED ({ex})")
-                continue
+        <div id="rolePlayerPicker" style="display:none; margin-bottom:18px;">
+          <input class="search" id="rolePlayerSearch" placeholder="Search player name..." style="max-width:320px; margin-bottom:10px;">
+          <div id="rolePlayerChecklist" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:6px; max-height:220px; overflow-y:auto;"></div>
+          <div style="margin-top:8px;">
+            <span class="foot-note" id="roleSelectionCount"></span>
+          </div>
+        </div>
 
-            fight_summary = {"file": fname, "durationMs": fight_duration_ms,
-                              "totalBlocks": 0, "aegisBlocks": 0}
+        <div class="chart-wrap tall"><canvas id="chartRole"></canvas></div>
+        <div class="table-scroll" style="margin-top:20px;">
+          <table id="tableRole">
+            <thead><tr></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
 
-            for row in rows:
-                squad_totals["totalBlocks"] += row["totalBlocks"]
-                squad_totals["aegisBlocks"] += row["aegisBlocks"]
-                squad_totals["otherBlocks"] += row["otherBlocks"]
-                squad_totals["blinds"] += row["blinds"]
-                squad_totals["aegisUptimeMs"] += row["aegisUptimeMs"]
-                squad_totals["activeTimeMs"] += fight_duration_ms
+    <!-- FIGHT LOG -->
+    <section class="section" id="sec-fights">
+      <h1>Fight Log</h1>
+      <div class="subtitle" id="fightsSubtitle"></div>
+      <div class="card">
+        <div class="table-scroll">
+          <table id="tableFights">
+            <thead><tr>
+              <th data-key="id">#</th>
+              <th data-key="date">Date / Time</th>
+              <th data-key="duration">Duration</th>
+              <th class="num" data-key="squad">Squad</th>
+              <th class="num" data-key="enemies">Enemies</th>
+              <th class="num" data-key="enemyDowned">Enemy Downed</th>
+              <th class="num" data-key="enemyKilled">Enemy Killed</th>
+              <th data-key="commander">Commander</th>
+              <th>Report</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
 
-                prof = row["profession"]
-                by_profession[prof]["totalBlocks"] += row["totalBlocks"]
-                by_profession[prof]["aegisBlocks"] += row["aegisBlocks"]
-                by_profession[prof]["otherBlocks"] += row["otherBlocks"]
-                by_profession[prof]["blinds"] += row["blinds"]
-                by_profession[prof]["aegisUptimeMs"] += row["aegisUptimeMs"]
-                by_profession[prof]["activeTimeMs"] += fight_duration_ms
+    <div class="foot-note">generated from combined Elite Insights logs // data.json</div>
+  </main>
+</div>
 
-                for skill_name, count in row["aegisBlockedSkills"].items():
-                    by_ability[skill_name] += count
+<script>
+const PALETTE = ['#c9a24a','#b3452f','#4f8062','#4a7fb3','#8a6fb3','#b38a4a','#4aa79c','#b34a7a'];
+const COLORS = {
+  gold:'#c9a24a', red:'#b3452f', green:'#4f8062', muted:'#8b96a8', text:'#e7ebf1',
+  grid:'#2a323e', panel:'#171c24'
+};
 
-                fight_summary["totalBlocks"] += row["totalBlocks"]
-                fight_summary["aegisBlocks"] += row["aegisBlocks"]
+Chart.defaults.color = COLORS.muted;
+Chart.defaults.font.family = "'IBM Plex Mono', monospace";
+Chart.defaults.font.size = 11;
 
-            per_fight.append(fight_summary)
-            print(f"  [{i+1}/{len(zevtc_files)}] {fname}: "
-                  f"{fight_summary['aegisBlocks']}/{fight_summary['totalBlocks']} aegis blocks")
+let DATA = null;
+let sortState = {};
 
-    def pct(uptime_ms, active_ms):
-        return round(uptime_ms / active_ms * 100, 1) if active_ms else 0
+function fmt(n){ return Math.round(n).toLocaleString('en-US'); }
 
-    result = {
-        "squad": {
-            **squad_totals,
-            "aegisUptimePct": pct(squad_totals["aegisUptimeMs"], squad_totals["activeTimeMs"]),
-        },
-        "byProfession": {
-            prof: {**data, "aegisUptimePct": pct(data["aegisUptimeMs"], data["activeTimeMs"])}
-            for prof, data in by_profession.items()
-        },
-        "byAbility": dict(sorted(by_ability.items(), key=lambda kv: -kv[1])),
-        "perFight": per_fight,
+async function loadData(){
+  try{
+    const res = await fetch('data.json');
+    DATA = await res.json();
+  }catch(e){
+    document.getElementById('dispatchLine').innerHTML =
+      '<span class="prompt">$</span> error: could not load data.json — run from a local server or GitHub Pages, not file://<span class="caret"></span>';
+    return;
+  }
+  render();
+}
+
+function render(){
+  const s = DATA.summary;
+  document.getElementById('brandGuild').textContent = s.guildName;
+  document.getElementById('dispatchLine').innerHTML =
+    `<span class="prompt">$</span> wvw-report --session "${s.sessionLabel}" --fights ${s.fightCount} --guild "${s.guildName}"<span class="caret"></span>`;
+  document.getElementById('overviewSubtitle').textContent =
+    `${s.sessionLabel} — ${s.fightCount} fights shown` +
+    (s.fightCountExcluded ? ` (${s.fightCountExcluded} excluded, <10v10)` : '');
+  document.getElementById('fightsSubtitle').textContent = `${DATA.fights.length} fights recorded`;
+
+  const stats = [
+    ['Fights', s.fightCount, false],
+    ['Enemies Killed', s.enemyKilled, true],
+    ['Enemies Downed', s.enemyDowned, true],
+    ['Squad Downed', s.squadDowned, false],
+    ['Squad Deaths', s.squadDeaths, false],
+    ['KDR', s.kdr, false],
+    ['Outgoing Damage', fmt(s.outgoingDamage), false],
+    ['Incoming Damage', fmt(s.incomingDamage), true],
+    ['Damage Mitigated', fmt(s.damageMitigated), false],
+    ['Heals Sent Out', fmt(s.totalHealing), false],
+  ];
+  document.getElementById('statGrid').innerHTML = stats.map(([label,value,enemy]) =>
+    `<div class="stat${enemy?' enemy':''}"><div class="value">${value}</div><div class="label">${label}</div></div>`
+  ).join('');
+
+  const outcomeNote = document.getElementById('raidOutcomeNote');
+  if (s.fightCountExcluded) {
+    outcomeNote.textContent =
+      `note: these totals are still combined across all ${s.fightCount + s.fightCountExcluded} recorded fights. ` +
+      `Only the Fight Log tab reflects the 10v10 filter.`;
+  }
+
+  // Overview charts are on the always-visible first tab, safe to build immediately.
+  buildBarChart('chartDpsOverview', DATA.players, 'dps', 8, COLORS.red);
+  buildBarChart('chartHealOverview', DATA.players, 'healing', 8, COLORS.green);
+  buildDonut('chartComposition', s.composition, 220);
+  renderCompositionLegend(s.composition);
+  renderHighScores(DATA.highScores);
+  renderPlayerList(DATA.players);
+  renderAbilityTable();
+  renderAegisStats();
+
+  buildTable('tableOffense', DATA.players, 'totalDmg', true);
+  buildTable('tableSupport', DATA.players, 'healing', true);
+  buildTable('tableControl', DATA.players, 'cc', true);
+  buildTable('tableFights', DATA.fights, 'id', false, (row) =>
+    row.link
+      ? `<td><a href="${row.link}" target="_blank" rel="noopener">View →</a></td>`
+      : `<td style="color:var(--muted)">—</td>`
+  );
+
+  setupSearch('searchOffense', 'tableOffense');
+  setupSearch('searchSupport', 'tableSupport');
+  setupSearch('searchControl', 'tableControl');
+}
+
+function buildBarChart(canvasId, players, key, n, color, horizontal){
+  const sorted = [...players].sort((a,b)=>b[key]-a[key]).slice(0,n);
+  const labels = sorted.map(p => `${p.name} (${p.prof})`);
+  const values = sorted.map(p => p[key]);
+  new Chart(document.getElementById(canvasId), {
+    type:'bar',
+    data:{ labels, datasets:[{ data: values, backgroundColor: color, borderRadius:3 }] },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{
+        x:{ grid:{ color: COLORS.grid }, ticks:{ callback:v=>fmt(v) } },
+        y:{ grid:{ display:false }, ticks:{ autoSkip:false, font:{ size: horizontal?13:13 } } }
+      }
     }
+  });
+}
 
-    with open(out_path, "w", encoding="utf-8") as f:
-        json.dump(result, f, indent=2)
+function buildDonut(canvasId, composition, size){
+  const labels = Object.keys(composition);
+  const values = Object.values(composition);
+  const displayLabels = labels.map((l, i) => `${l} (${values[i]})`);
+  new Chart(document.getElementById(canvasId), {
+    type:'doughnut',
+    data:{ labels: displayLabels, datasets:[{ data: values, backgroundColor: labels.map((_,i)=>PALETTE[i%PALETTE.length]), borderColor: COLORS.panel, borderWidth:2 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'right', labels:{ boxWidth:12, padding:10 } } }
+    }
+  });
+}
 
-    print(f"\nWrote {out_path}")
-    print(f"Squad: {squad_totals['aegisBlocks']}/{squad_totals['totalBlocks']} blocks attributed to Aegis "
-          f"({result['squad']['aegisUptimePct']}% avg uptime)")
+function renderCompositionLegend(composition){
+  const total = Object.values(composition).reduce((a,b)=>a+b, 0);
+  const entries = Object.entries(composition).sort((a,b)=>b[1]-a[1]);
+  const html = entries.map(([prof, count], i) => {
+    const color = PALETTE[i % PALETTE.length];
+    const pct = total ? Math.round((count/total)*100) : 0;
+    return `<div style="display:flex;align-items:center;gap:6px;">
+      <span style="width:10px;height:10px;border-radius:2px;background:${color};display:inline-block;flex-shrink:0;"></span>
+      <span>${prof}</span><span style="color:var(--muted);margin-left:auto;">${count} (${pct}%)</span>
+    </div>`;
+  }).join('');
+  const el = document.getElementById('compositionLegend');
+  if (el) el.innerHTML = html;
+}
 
+function renderHighScores(highScores){
+  const grid = document.getElementById('highScoresGrid');
+  if (!grid || !highScores) return;
 
-if __name__ == "__main__":
-    main()
+  const groups = {};
+  highScores.forEach(hs => {
+    if (!groups[hs.group]) groups[hs.group] = [];
+    groups[hs.group].push(hs);
+  });
+  const groupOrder = ['Offense', 'Support', 'Defense', 'Other'];
+
+  grid.innerHTML = groupOrder.filter(g => groups[g]).map(groupName => {
+    const cards = groups[groupName].map(hs => {
+      const rows = hs.entries.map((e, i) => {
+        const val = typeof e.value === 'number'
+          ? e.value.toLocaleString('en-US', { maximumFractionDigits: 2 })
+          : e.value;
+        return `<div class="hs-row">
+          <span class="hs-rank">${i+1}.</span>
+          <span class="hs-name">${e.name} (${e.prof})</span>
+          <span class="hs-value">${val}</span>
+        </div>`;
+      }).join('');
+      return `<div class="hs-card"><h3>${hs.label}</h3>${rows}</div>`;
+    }).join('');
+    return `<div class="hs-group">
+      <h2 class="hs-group-title">${groupName}</h2>
+      <div class="hs-grid">${cards}</div>
+    </div>`;
+  }).join('');
+}
+
+function buildTable(tableId, rows, defaultKey, isPlayerTable, extraColumn){
+  sortState[tableId] = { key: defaultKey, dir: -1 };
+  renderTableBody(tableId, rows, isPlayerTable, extraColumn);
+
+  const table = document.getElementById(tableId);
+  table.querySelectorAll('th[data-key]').forEach(th => {
+    th.addEventListener('click', () => {
+      const key = th.dataset.key;
+      const state = sortState[tableId];
+      state.dir = (state.key === key) ? -state.dir : -1;
+      state.key = key;
+      renderTableBody(tableId, rows, isPlayerTable, extraColumn);
+    });
+  });
+}
+
+function renderTableBody(tableId, rows, isPlayerTable, extraColumn){
+  const state = sortState[tableId];
+  const sorted = [...rows].sort((a,b)=>{
+    const av = a[state.key], bv = b[state.key];
+    if (typeof av === 'string') return state.dir * av.localeCompare(bv);
+    return state.dir * (av - bv);
+  });
+
+  const tbody = document.querySelector(`#${tableId} tbody`);
+  const cols = [...document.querySelectorAll(`#${tableId} th[data-key]`)].map(th => th.dataset.key);
+
+  tbody.innerHTML = sorted.map(row => {
+    let rowHtml = '<tr>' + cols.map(key => {
+      const val = row[key];
+      const isNum = typeof val === 'number';
+      const display = isNum ? fmt(val) : val;
+      const isNameCol = isPlayerTable && key === 'name';
+      return `<td class="${isNum?'num':''}${isNameCol?' name-cell':''}">${display}</td>`;
+    }).join('');
+    if (extraColumn) rowHtml += extraColumn(row);
+    return rowHtml + '</tr>';
+  }).join('');
+}
+
+function setupSearch(inputId, tableId){
+  const input = document.getElementById(inputId);
+  input.addEventListener('input', () => {
+    const q = input.value.toLowerCase();
+    document.querySelectorAll(`#${tableId} tbody tr`).forEach(tr => {
+      tr.style.display = tr.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+  });
+}
+
+// Charts inside initially-hidden tabs must be built AFTER their tab becomes
+// visible, since Chart.js reads a 0x0 size from a display:none container.
+const lazyChartInit = {
+  offense: () => buildBarChart('chartDpsFull', DATA.players, 'dps', DATA.players.length, COLORS.red, true),
+  support: () => buildBarChart('chartHealFull', DATA.players, 'healing', DATA.players.length, COLORS.green, true),
+  control: () => buildBarChart('chartCcFull', DATA.players, 'cc', DATA.players.length, COLORS.gold, true),
+  classes: () => buildDonut('chartCompositionFull', DATA.summary.composition, 380),
+  roles: () => { renderRolePlayerChecklist(); updateRoleSelectionCount(); renderRoleView('healer'); },
+  source: () => loadSourceCode(),
+};
+const initedSections = new Set();
+
+async function loadSourceCode(){
+  const block = document.getElementById('sourceCodeBlock');
+  let text;
+  try {
+    const res = await fetch('aegis_analysis.py');
+    if (!res.ok) throw new Error('not found');
+    text = await res.text();
+  } catch (e) {
+    block.textContent = 'Could not load aegis_analysis.py. Make sure it has been pushed to this repo alongside index.html and data.json.';
+    return;
+  }
+  block.textContent = text;
+  try {
+    hljs.highlightElement(block);
+  } catch (e) {
+    // Syntax highlighting is a nice-to-have; the raw code above is already showing either way.
+  }
+}
+
+// ---------- Player Profiles ----------
+const skillNameCache = {};
+
+async function resolveSkillNames(ids){
+  const toFetch = ids.filter(id => !(id in skillNameCache) && Number(id) > 0);
+  if (toFetch.length === 0) return;
+  try{
+    const res = await fetch(`https://api.guildwars2.com/v2/skills?ids=${toFetch.join(',')}`);
+    if (!res.ok) throw new Error('bad response');
+    const data = await res.json();
+    data.forEach(s => { skillNameCache[s.id] = s.name; });
+  }catch(e){
+    // API unreachable or ids invalid; fall back to raw IDs, no need to block rendering.
+  }
+  toFetch.forEach(id => { if (!(id in skillNameCache)) skillNameCache[id] = null; });
+}
+
+function renderPlayerList(players){
+  const list = document.getElementById('playerList');
+  const sorted = [...players].sort((a,b) => a.name.localeCompare(b.name));
+  list.innerHTML = sorted.map(p =>
+    `<div class="player-pill" data-key="${p.profileKey}">${p.name} (${p.prof})</div>`
+  ).join('');
+  list.querySelectorAll('.player-pill').forEach(el => {
+    el.addEventListener('click', () => selectPlayer(el.dataset.key));
+  });
+
+  document.getElementById('playerSearch').addEventListener('input', (e) => {
+    const q = e.target.value.toLowerCase();
+    list.querySelectorAll('.player-pill').forEach(el => {
+      el.style.display = el.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+  });
+}
+
+async function selectPlayer(profileKey){
+  const profile = DATA.playerProfiles[profileKey];
+  if (!profile) return;
+
+  document.querySelectorAll('.player-pill').forEach(el => {
+    el.classList.toggle('active', el.dataset.key === profileKey);
+  });
+
+  const card = document.getElementById('playerProfileCard');
+  card.style.display = '';
+  document.getElementById('profileName').textContent = `${profile.name} (${profile.prof})`;
+
+  const player = DATA.players.find(p => p.profileKey === profileKey);
+  const statRows = [
+    ['APM', profile.apm],
+    ['Active Time', `${profile.activeTimeMinutes} min`],
+    ['Fights', profile.fights.length],
+  ];
+  if (player) {
+    statRows.push(['DPS', fmt(player.dps)], ['Total Damage', fmt(player.totalDmg)]);
+  }
+  document.getElementById('profileStatGrid').innerHTML = statRows.map(([label,value]) =>
+    `<div class="stat"><div class="value">${value}</div><div class="label">${label}</div></div>`
+  ).join('');
+
+  document.getElementById('profileSkills').innerHTML = '<span style="color:var(--muted);">Loading skill names...</span>';
+  const skillIds = profile.topSkills.map(s => s.skillId);
+  await resolveSkillNames(skillIds);
+  document.getElementById('profileSkills').innerHTML = profile.topSkills.map(s => {
+    const name = skillNameCache[s.skillId] || `Skill #${s.skillId}`;
+    return `<div class="skill-row"><span class="skill-name">${name}</span><span class="skill-count">${s.count}</span></div>`;
+  }).join('');
+
+  const tbody = document.querySelector('#tableProfileFights tbody');
+  tbody.innerHTML = [...profile.fights].sort((a,b) => b.id - a.id).map(f => {
+    const linkCell = f.link
+      ? `<td><a href="${f.link}" target="_blank" rel="noopener">View →</a></td>`
+      : `<td style="color:var(--muted)">—</td>`;
+    return `<tr><td>${f.id}</td><td>${f.date}</td><td>${f.duration}</td><td class="num">${f.squad}</td><td class="num">${f.enemies}</td>${linkCell}</tr>`;
+  }).join('');
+}
+
+// ---------- Role Comparison ----------
+let roleChartInstance = null;
+let currentRole = 'healer';
+let roleMode = 'top12';
+let selectedRoleKeys = new Set();
+
+function renderRolePlayerChecklist(){
+  const list = document.getElementById('rolePlayerChecklist');
+  const sorted = [...DATA.players].sort((a,b) => a.name.localeCompare(b.name));
+  list.innerHTML = sorted.map(p => `
+    <label class="check-item">
+      <input type="checkbox" data-key="${p.profileKey}" ${selectedRoleKeys.has(p.profileKey) ? 'checked' : ''}>
+      <span>${p.name} (${p.prof})</span>
+    </label>
+  `).join('');
+  list.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      if (cb.checked) selectedRoleKeys.add(cb.dataset.key);
+      else selectedRoleKeys.delete(cb.dataset.key);
+      updateRoleSelectionCount();
+      renderRoleView(currentRole);
+    });
+  });
+
+  document.getElementById('rolePlayerSearch').addEventListener('input', (e) => {
+    const q = e.target.value.toLowerCase();
+    list.querySelectorAll('.check-item').forEach(el => {
+      el.style.display = el.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+  });
+}
+
+function updateRoleSelectionCount(){
+  const el = document.getElementById('roleSelectionCount');
+  el.textContent = `${selectedRoleKeys.size} player${selectedRoleKeys.size === 1 ? '' : 's'} selected`;
+}
+
+function renderRoleView(role){
+  currentRole = role;
+  document.querySelectorAll('.role-pill').forEach(el => {
+    el.classList.toggle('active', el.dataset.role === role);
+  });
+  document.getElementById('roleBoonSelectWrap').style.display = role === 'boon' ? '' : 'none';
+
+  let sortKey, color, title, columns;
+  if (role === 'healer'){
+    sortKey = 'healing'; color = COLORS.green; title = 'Healing Leaders';
+    columns = [
+      ['name','Player'], ['prof','Profession'],
+      ['healing','Healing'], ['barrier','Barrier'], ['cleanse','Cleanses'], ['resurrects','Res.']
+    ];
+  } else if (role === 'dps'){
+    sortKey = 'dps'; color = COLORS.red; title = 'DPS Leaders';
+    columns = [
+      ['name','Player'], ['prof','Profession'],
+      ['dps','DPS'], ['totalDmg','Total Damage'], ['downContr','Down Contr.']
+    ];
+  } else {
+    const boon = document.getElementById('roleBoonSelect').value;
+    sortKey = '__boon__'; color = COLORS.gold; title = `${boon[0].toUpperCase()+boon.slice(1)} Generation`;
+    columns = [['name','Player'], ['prof','Profession'], ['__boon__', boon[0].toUpperCase()+boon.slice(1)]];
+  }
+
+  const getVal = (p) => role === 'boon' ? (p.boonGen[document.getElementById('roleBoonSelect').value] || 0) : p[sortKey];
+
+  const pool = roleMode === 'custom'
+    ? DATA.players.filter(p => selectedRoleKeys.has(p.profileKey))
+    : DATA.players;
+  const chartPlayers = [...pool].sort((a,b) => getVal(b) - getVal(a)).slice(0, roleMode === 'custom' ? pool.length : 12);
+
+  if (roleChartInstance) roleChartInstance.destroy();
+
+  if (chartPlayers.length === 0){
+    const ctx = document.getElementById('chartRole').getContext('2d');
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    document.querySelector('#tableRole thead tr').innerHTML = '';
+    document.querySelector('#tableRole tbody').innerHTML =
+      '<tr><td style="color:var(--muted); padding:16px;">Select at least one player above to compare.</td></tr>';
+    return;
+  }
+
+  const labels = chartPlayers.map(p => `${p.name} (${p.prof})`);
+  const values = chartPlayers.map(p => getVal(p));
+
+  roleChartInstance = new Chart(document.getElementById('chartRole'), {
+    type:'bar',
+    data:{ labels, datasets:[{ data: values, backgroundColor: color, borderRadius:3 }] },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false }, title:{ display:true, text:title, color: COLORS.text, font:{ size:14 } } },
+      scales:{
+        x:{ grid:{ color: COLORS.grid }, ticks:{ callback:v=>fmt(v) } },
+        y:{ grid:{ display:false }, ticks:{ autoSkip:false, font:{ size:13 } } }
+      }
+    }
+  });
+
+  const tablePool = roleMode === 'custom' ? chartPlayers : [...DATA.players].sort((a,b) => getVal(b) - getVal(a));
+  const thead = document.querySelector('#tableRole thead tr');
+  thead.innerHTML = columns.map(([key,label]) => `<th class="${key==='name'||key==='prof'?'':'num'}">${label}</th>`).join('');
+  const tbody = document.querySelector('#tableRole tbody');
+  tbody.innerHTML = tablePool.map(p => {
+    return '<tr>' + columns.map(([key]) => {
+      let val;
+      if (key === '__boon__') val = getVal(p);
+      else val = p[key];
+      const isNum = typeof val === 'number';
+      return `<td class="${isNum?'num':''}${key==='name'?' name-cell':''}">${isNum?fmt(val):val}</td>`;
+    }).join('') + '</tr>';
+  }).join('');
+}
+
+document.querySelectorAll('.role-pill').forEach(el => {
+  el.addEventListener('click', () => renderRoleView(el.dataset.role));
+});
+document.getElementById('roleBoonSelect').addEventListener('change', () => renderRoleView('boon'));
+document.querySelectorAll('.mode-pill').forEach(el => {
+  el.addEventListener('click', () => {
+    roleMode = el.dataset.mode;
+    document.querySelectorAll('.mode-pill').forEach(m => m.classList.toggle('active', m === el));
+    document.getElementById('rolePlayerPicker').style.display = roleMode === 'custom' ? '' : 'none';
+    renderRoleView(currentRole);
+  });
+});
+
+// ---------- Aegis Stats ----------
+function renderAegisStats(){
+  const container = document.getElementById('aegisContent');
+  const aegis = DATA.aegisStats;
+
+  if (!aegis){
+    container.innerHTML = `<div class="card"><p style="color:var(--muted);">
+      Aegis analysis wasn't available for this session. This needs the raw .zevtc files
+      to be present and analyzed at parse time, before they're archived or cleaned up.
+    </p></div>`;
+    return;
+  }
+
+  const s = aegis.squad;
+  const statsHtml = [
+    ['Total Blocks', fmt(s.totalBlocks)],
+    ['Aegis Blocks', fmt(s.aegisBlocks)],
+    ['Other Blocks', fmt(s.otherBlocks)],
+    ['Blind Misses Caused', fmt(s.blinds)],
+    ['Aegis Uptime %', s.aegisUptimePct + '%'],
+  ].map(([label,value]) =>
+    `<div class="stat"><div class="value">${value}</div><div class="label">${label}</div></div>`
+  ).join('');
+
+  const profRows = Object.entries(aegis.byProfession)
+    .sort((a,b) => b[1].aegisBlocks - a[1].aegisBlocks)
+    .map(([prof, d]) => `<tr>
+      <td class="name-cell">${prof}</td>
+      <td class="num">${fmt(d.totalBlocks)}</td>
+      <td class="num">${fmt(d.aegisBlocks)}</td>
+      <td class="num">${fmt(d.otherBlocks)}</td>
+      <td class="num">${fmt(d.blinds)}</td>
+      <td class="num">${d.aegisUptimePct}%</td>
+    </tr>`).join('');
+
+  const abilityRows = Object.entries(aegis.byAbility)
+    .slice(0, 20)
+    .map(([skill, count]) => `<tr><td class="name-cell">${skill}</td><td class="num">${fmt(count)}</td></tr>`)
+    .join('');
+
+  container.innerHTML = `
+    <div class="card">
+      <h2>Squad Totals</h2>
+      <div class="stat-grid">${statsHtml}</div>
+    </div>
+    <div class="card">
+      <h2>By Profession</h2>
+      <div class="table-scroll">
+        <table>
+          <thead><tr>
+            <th>Profession</th><th class="num">Total Blocks</th><th class="num">Aegis Blocks</th>
+            <th class="num">Other Blocks</th><th class="num">Blinds</th><th class="num">Aegis Uptime %</th>
+          </tr></thead>
+          <tbody>${profRows}</tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Top Abilities Blocked by Aegis</h2>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Enemy Ability</th><th class="num">Times Blocked</th></tr></thead>
+          <tbody>${abilityRows}</tbody>
+        </table>
+      </div>
+    </div>
+    <div class="foot-note">Computed directly from the raw combat log (not Elite Insights' processed output), correlating each block event's exact timestamp against Aegis's on/off windows for that player. Validated against Elite Insights' own block/miss counts, exact match on real test data.</div>
+  `;
+}
+
+// ---------- Ability Stats ----------
+let abilityScope = 'squad';
+let abilitySort = { key: 'attempts', dir: -1 };
+
+function renderAbilityScopeOptions(){
+  const select = document.getElementById('abilityScopeSelect');
+  if (abilityScope === 'profession'){
+    const profs = Object.keys(DATA.abilityStats.byProfession).sort();
+    select.innerHTML = profs.map(p => `<option value="${p}">${p}</option>`).join('');
+  } else if (abilityScope === 'player'){
+    const players = [...DATA.players].sort((a,b) => a.name.localeCompare(b.name));
+    select.innerHTML = players.map(p => `<option value="${p.profileKey}">${p.name} (${p.prof})</option>`).join('');
+  }
+}
+
+async function renderAbilityTable(){
+  let rows;
+  if (abilityScope === 'squad'){
+    rows = DATA.abilityStats.squad;
+  } else if (abilityScope === 'profession'){
+    const prof = document.getElementById('abilityScopeSelect').value;
+    rows = DATA.abilityStats.byProfession[prof] || [];
+  } else {
+    const key = document.getElementById('abilityScopeSelect').value;
+    rows = DATA.abilityStats.byPlayer[key] || [];
+  }
+
+  const tbody = document.querySelector('#tableAbility tbody');
+  tbody.innerHTML = '<tr><td style="color:var(--muted); padding:12px;">Loading ability names...</td></tr>';
+
+  const ids = rows.map(r => r.skillId);
+  await resolveSkillNames(ids);
+
+  const withNames = rows.map(r => ({ ...r, skillName: skillNameCache[r.skillId] || `Skill #${r.skillId}` }));
+  withNames.sort((a,b) => {
+    const av = a[abilitySort.key], bv = b[abilitySort.key];
+    if (typeof av === 'string') return abilitySort.dir * av.localeCompare(bv);
+    return abilitySort.dir * (av - bv);
+  });
+
+  tbody.innerHTML = withNames.map(r => `<tr>
+    <td class="name-cell">${r.skillName}</td>
+    <td class="num">${fmt(r.attempts)}</td>
+    <td class="num">${fmt(r.hits)}</td>
+    <td class="num">${fmt(r.blocked)}</td>
+    <td class="num">${r.blockPct}%</td>
+    <td class="num">${fmt(r.missed)}</td>
+    <td class="num">${r.missPct}%</td>
+    <td class="num">${fmt(r.evaded)}</td>
+    <td class="num">${fmt(r.invulned)}</td>
+  </tr>`).join('');
+}
+
+function setAbilityScope(scope){
+  abilityScope = scope;
+  document.querySelectorAll('#sec-abilities .role-pill').forEach(el => {
+    el.classList.toggle('active', el.dataset.scope === scope);
+  });
+  const wrap = document.getElementById('abilityScopeSelectWrap');
+  wrap.style.display = scope === 'squad' ? 'none' : '';
+  if (scope !== 'squad') renderAbilityScopeOptions();
+  renderAbilityTable();
+}
+
+document.querySelectorAll('#sec-abilities .role-pill').forEach(el => {
+  el.addEventListener('click', () => setAbilityScope(el.dataset.scope));
+});
+document.getElementById('abilityScopeSelect').addEventListener('change', renderAbilityTable);
+document.querySelectorAll('#tableAbility th').forEach(th => {
+  th.addEventListener('click', () => {
+    const key = th.dataset.key;
+    abilitySort.dir = (abilitySort.key === key) ? -abilitySort.dir : -1;
+    abilitySort.key = key;
+    renderAbilityTable();
+  });
+});
+
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    item.classList.add('active');
+    document.getElementById('sec-' + item.dataset.section).classList.add('active');
+
+    const section = item.dataset.section;
+    if (lazyChartInit[section] && !initedSections.has(section)) {
+      initedSections.add(section);
+      lazyChartInit[section]();
+    }
+  });
+});
+
+loadData();
+</script>
+</body>
+</html>
