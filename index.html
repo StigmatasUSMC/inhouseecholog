@@ -774,18 +774,29 @@ async function loadSourceCode(){
 // ---------- Player Profiles ----------
 const skillNameCache = {};
 const skillIconCache = {};
+const GW2_API_BATCH_LIMIT = 150; // GW2's documented limit is 200 ids per request; we stay under it for safety.
 
 async function resolveSkillNames(ids){
   const toFetch = ids.filter(id => !(id in skillNameCache) && Number(id) > 0);
   if (toFetch.length === 0) return;
-  try{
-    const res = await fetch(`https://api.guildwars2.com/v2/skills?ids=${toFetch.join(',')}`);
-    if (!res.ok) throw new Error('bad response');
-    const data = await res.json();
-    data.forEach(s => { skillNameCache[s.id] = s.name; skillIconCache[s.id] = s.icon || null; });
-  }catch(e){
-    // API unreachable or ids invalid; fall back to raw IDs, no need to block rendering.
+
+  const chunks = [];
+  for (let i = 0; i < toFetch.length; i += GW2_API_BATCH_LIMIT){
+    chunks.push(toFetch.slice(i, i + GW2_API_BATCH_LIMIT));
   }
+
+  for (const chunk of chunks){
+    try{
+      const res = await fetch(`https://api.guildwars2.com/v2/skills?ids=${chunk.join(',')}`);
+      if (!res.ok && res.status !== 206) throw new Error('bad response');
+      const data = await res.json();
+      data.forEach(s => { skillNameCache[s.id] = s.name; skillIconCache[s.id] = s.icon || null; });
+    }catch(e){
+      // This chunk failed (API unreachable, rate limited, etc.); fall back to raw IDs for
+      // just this chunk rather than aborting every other chunk that might still succeed.
+    }
+  }
+
   toFetch.forEach(id => { if (!(id in skillNameCache)) skillNameCache[id] = null; });
 }
 
